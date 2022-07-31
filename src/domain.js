@@ -1,3 +1,5 @@
+var mysql = require('mysql');
+
 exports.handler = async (event) => {
   // (optional) fetch method and querystring
   const method = event.requestContext.http.method;
