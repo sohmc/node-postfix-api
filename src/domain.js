@@ -1,17 +1,13 @@
-const mysql = require('mysql');
+const mysql = require('mysql2/promise');
 
-exports.handler = async (event) => {
+exports.handler = async (lambdaEvent, lambdaContext) => {
+  console.log('handler event: ' + JSON.stringify(lambdaEvent));
+  console.log('handler context: ' + JSON.stringify(lambdaContext));
+
   // (optional) fetch method and querystring
-  const method = event.requestContext.http.method;
-  const queryParam = event.queryStringParameters;
-  console.log(`Received ${method} request with ${queryParam}`);
-
-  // retrieve signature and payload
-  const webhookHeaders = event.headers;
-  const webhookBody = JSON.parse(event.body);
-
-  console.log('Received Headers: ' + JSON.stringify(webhookHeaders));
-  console.log('Received Body: ' + JSON.stringify(webhookBody));
+  const method = lambdaEvent.requestContext.http.method;
+  const queryParam = lambdaEvent.queryStringParameters;
+  console.log(`Received ${method} request with ${JSON.stringify(queryParam)}`);
 
   const lambdaResponseObject = {
     statusCode: 418,
@@ -24,7 +20,7 @@ exports.handler = async (event) => {
   try {
     if (method === 'GET') {
       if (Object.prototype.hasOwnProperty.call(queryParam, 'domain')) {
-        getDomainInformation(queryParam.domain);
+        await getDomainInformation(queryParam.domain);
         lambdaResponseObject.statusCode = 200;
         lambdaResponseObject.body = { 'message': 'This function is working!' };
       } else if (Object.prototype.hasOwnProperty.call(queryParam, 'q')) {
@@ -35,9 +31,6 @@ exports.handler = async (event) => {
         lambdaResponseObject.body = { 'message': 'This function has not been implemented' };
       }
     }
-
-    // validateSignature(webhookSignature); // throws if invalid signature
-    // handleEvent(webhookPayload); // throws if processing error
   } catch (error) {
     console.error(error);
     return {
@@ -49,33 +42,31 @@ exports.handler = async (event) => {
   return lambdaResponseObject;
 };
 
-function getDomainInformation(domainIn) {
-  mysqlQuery(`SELECT * FROM domains WHERE domain='${domainIn}'`);
-  return true;
+async function getDomainInformation(domainIn) {
+  const returnObject = {
+    statusCode: 200,
+    body: '{"error": "Domain does not exist"}',
+  };
+
+  const domainInformation = await mysqlQuery('SELECT * FROM domain WHERE domain=?', [domainIn]);
+
+  if ((domainInformation.length == 1) && Object.prototype.hasOwnProperty.call(domainInformation[0], 'domain')) {
+    returnObject.body = JSON.stringify(domainInformation[0]);
+  }
+
+  return returnObject;
 }
 
-function mysqlQuery(query, queryValues) {
-  let queryResults = [];
-
-  const dbConnection = mysql.createConnection({
+async function mysqlQuery(query, queryValues) {
+  const dbConnection = await mysql.createConnection({
     host: process.env.POSTFIX_HOST,
     user: process.env.POSTFIX_USER,
     password: process.env.POSTFIX_PASSWORD,
+    database: process.env.POSTFIX_DB,
   });
 
-  dbConnection.query(query, queryValues, function(error, results) {
-    if (error) {
-      console.log(error);
-      queryResults = ['error', error];
-    } else if (results.length > 0) {
-      console.log('Results length: ' + results.length);
-      queryResults = results;
-    } else {
-      queryResults = ['error', 'No results found'];
-    }
-
-    console.log(results);
-  });
+  const [queryResults, _fields] = await dbConnection.execute(query, queryValues);
+  console.log('Rows: ' + JSON.stringify(queryResults));
 
   dbConnection.end();
 

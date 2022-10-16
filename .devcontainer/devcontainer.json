@@ -10,6 +10,10 @@
 		"args": { "VARIANT": "16-bullseye" }
 	},
 
+	"mounts": [
+		"type=bind,source=${localEnv:HOME}/.aws,destination=/home/node/.aws,readonly=true"
+	],
+
 	// Set *default* container specific settings.json values on container create.
 	"settings": {},
 

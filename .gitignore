@@ -1,2 +1,4 @@
 node_modules/
 .env
+*.zip
+instance-to-rds.sql
