@@ -23,7 +23,7 @@ exports.handler = async (lambdaEvent, lambdaContext) => {
     const endpointFunction = loadEndpoint(endpoint);
 
     const queryStringParameters = lambdaEvent.queryStringParameters || {};
-    const requestBody = JSON.parse(lambdaEvent.body) || {};
+    const requestBody = JSON.parse(lambdaEvent.body || '{}');
 
     if (Object.prototype.hasOwnProperty.call(endpointFunction, 'metadata') &&
       (endpointFunction.metadata.supportedMethods.indexOf(requestContext.http.method) >= 0)) {
