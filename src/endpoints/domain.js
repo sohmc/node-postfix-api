@@ -17,7 +17,7 @@ module.exports = {
       },
       body: {
         'code': 418,
-        'type': '',
+        'type': 'domain',
         'message': '',
       },
     };
@@ -48,43 +48,11 @@ module.exports = {
 
         // If there is a path parameter and there is at least one accepted property in the request body, then continue
         if ((pathParameters.length > 0) && (allowedProperties.findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
-          const setClauses = [];
-          const placeholderArray = [];
-          let returnObject = {
-            statusCode: 405,
-            body: {
-              'code': 405,
-              'type': 'domain',
-              'message': 'Domain does not exist.',
-            },
-          };
 
-          allowedProperties.forEach(column => {
-            console.log('checking for column ' + column);
-            if (Object.prototype.hasOwnProperty.call(requestBody, column)) {
-              setClauses.push(column + '=?');
-              placeholderArray.push(requestBody[column]);
-            }
-          });
-
-          placeholderArray.push(pathParameters[0]);
-
-          const query = 'UPDATE domain SET ' + setClauses.join(', ') + ' WHERE domain=?';
-          console.log('query: ' + query);
-          const queryResults = await mysqlQuery(query, placeholderArray);
-
-          if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
-            // if everything was successful, get the domain information from the database and return it as a response.
-            const whereClause = 'domain=?';
-            returnObject = await getDomainInformation(whereClause, [placeholderArray.pop()]);
-          } else {
-            returnObject.body.type = 'domain';
-            returnObject.body.message = 'error updating domain in table';
-          }
-
-          lambdaResponseObject = returnObject;
+          lambdaResponseObject = await updateDomainObject(pathParameters[0], requestBody, allowedProperties);
         } else {
           lambdaResponseObject.statusCode = 405;
+          lambdaResponseObject.body.code = 405;
           lambdaResponseObject.body.message = 'must provide a property to update';
         }
       }
@@ -170,6 +138,46 @@ async function insertDomainObject(placeholderArray) {
   } else {
     returnObject.body.type = 'domain';
     returnObject.body.message = 'error inserting domain into table';
+  }
+
+  return returnObject;
+}
+
+async function updateDomainObject(domain, requestBody, allowedProperties) {
+  const setClauses = [];
+  const placeholderArray = [];
+  let returnObject = {
+    statusCode: 405,
+    body: {
+      'code': 405,
+      'type': 'domain',
+      'message': 'Domain does not exist.',
+    },
+  };
+
+  allowedProperties.forEach(column => {
+    console.log('checking for column ' + column);
+    if (Object.prototype.hasOwnProperty.call(requestBody, column)) {
+      setClauses.push(column + '=?');
+      placeholderArray.push(requestBody[column]);
+    }
+  });
+
+  // domain is always last
+  placeholderArray.push(domain);
+
+  const query = 'UPDATE domain SET ' + setClauses.join(', ') + ' WHERE domain=?';
+  console.log('query: ' + query);
+  const queryResults = await mysqlQuery(query, placeholderArray);
+
+  if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+    // if everything was successful, get the domain information from the database and return it as a response.
+    // domain is always last in the placeholderArray
+    const whereClause = 'domain=?';
+    returnObject = await getDomainInformation(whereClause, [placeholderArray.pop()]);
+  } else {
+    returnObject.body.type = 'domain';
+    returnObject.body.message = 'error updating domain in table';
   }
 
   return returnObject;
