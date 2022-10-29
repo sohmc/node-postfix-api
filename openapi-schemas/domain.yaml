@@ -92,10 +92,8 @@ paths:
         description: Exactly one Domain object.  Only the `description` and `active` properties are accepted.  One of those two properties must be provided.  All other properties are silently ignored.
         required: true
       responses:
-        '201':
+        '200':
           $ref: '#/components/responses/DomainObject'
-        '204': 
-          description: No action was performed, usually as a result of no valid properties being provided.
         '405':
           $ref: '#/components/responses/InvalidInput'
 

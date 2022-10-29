@@ -83,6 +83,9 @@ module.exports = {
           }
 
           lambdaResponseObject = returnObject;
+        } else {
+          lambdaResponseObject.statusCode = 405;
+          lambdaResponseObject.body.message = 'must provide a property to update';
         }
       }
     } catch (error) {
@@ -90,7 +93,7 @@ module.exports = {
       lambdaResponseObject = {
         statusCode: 405,
         body: {
-          'code': 418,
+          'code': 405,
           'type': 'lambda',
           'message': `Could not process event: ${error}`,
         },
@@ -98,7 +101,10 @@ module.exports = {
     }
 
     // Stringify the object within the body
-    lambdaResponseObject.body = JSON.stringify(lambdaResponseObject.body);
+    if (Object.prototype.hasOwnProperty.call(lambdaResponseObject, 'body') && typeof lambdaResponseObject.body === 'object') {
+      lambdaResponseObject.body = JSON.stringify(lambdaResponseObject.body);
+    }
+
     return lambdaResponseObject;
   },
 };
