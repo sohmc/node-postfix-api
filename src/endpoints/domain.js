@@ -24,11 +24,13 @@ module.exports = {
 
     try {
       if (method === 'GET') {
+        // If there are path parameters, then do a query for the domain provided
         if (pathParameters.length > 0) {
-          lambdaResponseObject = await getDomainInformation(pathParameters[0]);
-        } else {
-          lambdaResponseObject.statusCode = 405;
-          lambdaResponseObject.body = { 'message': 'This function has not been implemented' };
+          const whereClause = 'domain=?';
+          lambdaResponseObject = await getDomainInformation(whereClause, [pathParameters[0]]);
+        } else if (Object.prototype.hasOwnProperty.call(queryParameters, 'q')) {
+          const whereClause = 'domain LIKE ?';
+          lambdaResponseObject = await getDomainInformation(whereClause, ['%' + queryParameters.q + '%']);
         }
       }
     } catch (error) {
@@ -49,7 +51,8 @@ module.exports = {
   },
 };
 
-async function getDomainInformation(domainIn) {
+async function getDomainInformation(whereClause, placeholderArray) {
+  console.log('getDomainInformation: ' + whereClause + ':' + placeholderArray);
   const returnObject = {
     statusCode: 405,
     body: {
@@ -59,12 +62,18 @@ async function getDomainInformation(domainIn) {
     },
   };
 
-  const domainInformation = await mysqlQuery('SELECT * FROM domain WHERE domain=?', [domainIn]);
+  const query = 'SELECT * FROM domain WHERE ' + whereClause;
+  const domainInformation = await mysqlQuery(query, placeholderArray);
 
-  if ((domainInformation.length == 1) && Object.prototype.hasOwnProperty.call(domainInformation[0], 'domain')) {
-    const returnDomainObject = createDomainObject(domainInformation[0]);
+  if ((domainInformation.length >= 1) && Object.prototype.hasOwnProperty.call(domainInformation[0], 'domain')) {
+    const returnArray = [];
+    domainInformation.forEach(domainRow => {
+      const returnDomainObject = createDomainObject(domainRow);
+      returnArray.push(returnDomainObject);
+    });
+
     returnObject.statusCode = 200;
-    returnObject.body = [returnDomainObject];
+    returnObject.body = returnArray;
   }
 
   return returnObject;

@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "predeploy": "rm function.zip ; zip -r function.zip ./*",
+    "deploy": "bash ../.ci/deploy-lambda.bash",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
-  "license": "GPL-3.0",
+  "license": "AGPL-3.0",
   "description": "",
   "dependencies": {
     "mysql2": "^2.3.3"
