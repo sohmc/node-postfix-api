@@ -46,7 +46,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Domain'
-        description: Domain object
+        description: Exactly one Domain object.  Only the `domain` property is required.  `description` and `active` are accepted properties.  All other properties are silently ignored.
         required: true
       responses:
         '200':
@@ -109,8 +109,10 @@ components:
           example: subdomain.example.com
         description:
           type: string
+          default: ""
         active:
           type: boolean
+          default: true
         created:
           type: string
           description: The date-time of when the domain was added.

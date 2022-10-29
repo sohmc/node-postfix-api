@@ -3,11 +3,11 @@ const mysql = require('mysql2/promise');
 module.exports = {
   'metadata': {
     'endpoint': 'domain',
-    'supportedMethods': ['GET'],
+    'supportedMethods': ['GET', 'POST'],
     'description': 'Works on domain objects, providing information about domains as well as creating domain records.',
   },
 
-  async execute(method, pathParameters, queryParameters, _body) {
+  async execute(method, pathParameters, queryParameters, requestBody) {
     console.log(`Received ${method} request with pathParameters ${JSON.stringify(pathParameters)} and queryParameters ${JSON.stringify(queryParameters)}`);
 
     let lambdaResponseObject = {
@@ -31,6 +31,26 @@ module.exports = {
         } else if (Object.prototype.hasOwnProperty.call(queryParameters, 'q')) {
           const whereClause = 'domain LIKE ?';
           lambdaResponseObject = await getDomainInformation(whereClause, ['%' + queryParameters.q + '%']);
+        }
+      } else if (method === 'POST') {
+        console.log('requestBody: ' + JSON.stringify(requestBody));
+        if (!Object.prototype.hasOwnProperty.call(requestBody, 'domain') || requestBody.domain.length == 0) {
+          lambdaResponseObject.body.type = 'domain';
+          lambdaResponseObject.body.message = 'domain property required';
+        } else {
+          const placeholderArray = [ requestBody.domain, requestBody.description || '', requestBody.active || true ];
+          const query = 'INSERT INTO domain SET domain=?, description=?, active=?, transport="virtual",  created=NOW(), modified=NOW()';
+
+          // INSERT row into database
+          const queryResults = await mysqlQuery(query, placeholderArray);
+          if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+            // if everything was successful, get the domain information from the database and return it as a response.
+            const whereClause = 'domain=?';
+            lambdaResponseObject = await getDomainInformation(whereClause, [requestBody.domain]);
+          } else {
+            lambdaResponseObject.body.type = 'domain';
+            lambdaResponseObject.body.message = 'error inserting domain into table';
+          }
         }
       }
     } catch (error) {
