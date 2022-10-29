@@ -90,7 +90,7 @@ paths:
 
 components:
   schemas:
-    ApiResponse:
+    ErrorResponse:
       type: object
       properties:
         code:
@@ -109,7 +109,7 @@ components:
           example: subdomain.example.com
         description:
           type: string
-        activeFlag:
+        active:
           type: boolean
         created:
           type: string
@@ -123,12 +123,12 @@ components:
     DomainObject:
       description: Complete information regarding a domain.
       content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Domain'
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Domain'
     InvalidInput:
-      description: Invalid input.  ApiResponse message will have error information.
+      description: Invalid input.  ErrorResponse message will have error information.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ApiResponse'
+            $ref: '#/components/schemas/ErrorResponse'

@@ -15,7 +15,11 @@ module.exports = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: '{"message": "I am a teapot"}',
+      body: {
+        'code': 418,
+        'type': '',
+        'message': '',
+      },
     };
 
     try {
@@ -23,36 +27,60 @@ module.exports = {
         if (pathParameters.length > 0) {
           lambdaResponseObject = await getDomainInformation(pathParameters[0]);
         } else {
-          lambdaResponseObject.statusCode = 400;
+          lambdaResponseObject.statusCode = 405;
           lambdaResponseObject.body = { 'message': 'This function has not been implemented' };
         }
       }
     } catch (error) {
       console.error(error);
       lambdaResponseObject = {
-        statusCode: 400,
-        body: `{"error": "Cannot process event: ${error}}"`,
+        statusCode: 405,
+        body: {
+          'code': 418,
+          'type': 'lambda',
+          'message': `Could not process event: ${error}`,
+        },
       };
     }
 
+    // Stringify the object within the body
+    lambdaResponseObject.body = JSON.stringify(lambdaResponseObject.body);
     return lambdaResponseObject;
   },
 };
 
 async function getDomainInformation(domainIn) {
   const returnObject = {
-    statusCode: 200,
-    body: '{"error": "Domain does not exist"}',
+    statusCode: 405,
+    body: {
+      'code': 405,
+      'type': 'domain',
+      'message': 'Domain does not exist.',
+    },
   };
 
   const domainInformation = await mysqlQuery('SELECT * FROM domain WHERE domain=?', [domainIn]);
 
   if ((domainInformation.length == 1) && Object.prototype.hasOwnProperty.call(domainInformation[0], 'domain')) {
-    returnObject.body = JSON.stringify(domainInformation[0]);
+    const returnDomainObject = createDomainObject(domainInformation[0]);
+    returnObject.statusCode = 200;
+    returnObject.body = [returnDomainObject];
   }
 
   return returnObject;
 }
+
+// Creates the domain object that aligns with the API declared schema
+function createDomainObject(mysqlRowObject) {
+  return {
+    'domain': mysqlRowObject.domain,
+    'description': mysqlRowObject.description,
+    'active': mysqlRowObject.active,
+    'created': mysqlRowObject.created,
+    'modified': mysqlRowObject.modified,
+  };
+}
+
 
 async function mysqlQuery(query, queryValues) {
   const dbConnection = await mysql.createConnection({
