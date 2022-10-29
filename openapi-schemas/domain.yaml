@@ -49,26 +49,11 @@ paths:
         description: Exactly one Domain object.  Only the `domain` property is required.  `description` and `active` are accepted properties.  All other properties are silently ignored.
         required: true
       responses:
-        '200':
+        '201':
           $ref: '#/components/responses/DomainObject'
         '405':
           $ref: '#/components/responses/InvalidInput'
-    patch:
-      tags:
-        - domain
-      description: Modifies an existing Domain object.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Domain'
-        description: A modified Domain Object.
-        required: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DomainObject'
-        '405':
-          $ref: '#/components/responses/InvalidInput'
+
   /domain/{domain}:
     get:
       tags:
@@ -85,6 +70,32 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/DomainObject'
+        '405':
+          $ref: '#/components/responses/InvalidInput'
+    patch:
+      tags:
+        - domain
+      description: Modifies an existing Domain object.
+      parameters:
+        - in: path
+          name: domain
+          description: >-
+            Fully-qualified domain name to modify.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Domain'
+        description: Exactly one Domain object.  Only the `description` and `active` properties are accepted.  One of those two properties must be provided.  All other properties are silently ignored.
+        required: true
+      responses:
+        '201':
+          $ref: '#/components/responses/DomainObject'
+        '204': 
+          description: No action was performed, usually as a result of no valid properties being provided.
         '405':
           $ref: '#/components/responses/InvalidInput'
 

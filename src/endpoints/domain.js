@@ -47,6 +47,7 @@ module.exports = {
             // if everything was successful, get the domain information from the database and return it as a response.
             const whereClause = 'domain=?';
             lambdaResponseObject = await getDomainInformation(whereClause, [requestBody.domain]);
+            lambdaResponseObject.statusCode = 201;
           } else {
             lambdaResponseObject.body.type = 'domain';
             lambdaResponseObject.body.message = 'error inserting domain into table';
