@@ -39,20 +39,10 @@ module.exports = {
           lambdaResponseObject.body.message = 'domain property required';
         } else {
           const placeholderArray = [ requestBody.domain, requestBody.description || '', requestBody.active || true ];
-          const query = 'INSERT INTO domain SET domain=?, description=?, active=?, transport="virtual",  created=NOW(), modified=NOW()';
-
-          // INSERT row into database
-          const queryResults = await mysqlQuery(query, placeholderArray);
-          if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
-            // if everything was successful, get the domain information from the database and return it as a response.
-            const whereClause = 'domain=?';
-            lambdaResponseObject = await getDomainInformation(whereClause, [requestBody.domain]);
-            lambdaResponseObject.statusCode = 201;
-          } else {
-            lambdaResponseObject.body.type = 'domain';
-            lambdaResponseObject.body.message = 'error inserting domain into table';
-          }
+          lambdaResponseObject = await insertDomainObject(placeholderArray);
         }
+      } else if (method === 'PATCH') {
+        return false;
       }
     } catch (error) {
       console.error(error);
@@ -111,6 +101,32 @@ function createDomainObject(mysqlRowObject) {
   };
 }
 
+async function insertDomainObject(placeholderArray) {
+  let returnObject = {
+    statusCode: 405,
+    body: {
+      'code': 405,
+      'type': 'domain',
+      'message': 'Domain does not exist.',
+    },
+  };
+
+  const query = 'INSERT INTO domain SET domain=?, description=?, active=?, transport="virtual",  created=NOW(), modified=NOW()';
+
+  // INSERT row into database
+  const queryResults = await mysqlQuery(query, placeholderArray);
+  if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+    // if everything was successful, get the domain information from the database and return it as a response.
+    const whereClause = 'domain=?';
+    returnObject = await getDomainInformation(whereClause, [placeholderArray[0]]);
+    returnObject.statusCode = 201;
+  } else {
+    returnObject.body.type = 'domain';
+    returnObject.body.message = 'error inserting domain into table';
+  }
+
+  return returnObject;
+}
 
 async function mysqlQuery(query, queryValues) {
   const dbConnection = await mysql.createConnection({
