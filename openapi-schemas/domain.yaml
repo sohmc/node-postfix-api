@@ -1,0 +1,134 @@
+openapi: 3.0.2
+info:
+  description: |
+    Manage and create domains that postfix will serve.
+  version: 1.0.0
+  title: postfix api - domain
+  license:
+    name: AGPL 3.0
+    url: 'https://www.gnu.org/licenses/agpl-3.0.en.html'
+tags:
+  - name: domain
+    description: Domains that your aliases will belong to
+
+paths:
+  /domain:
+    get:
+      tags:
+        - domain
+      description: Provides all domains that this server handles.
+      parameters:
+        - in: query
+          name: q
+          description: >-
+            Query to run against all domains.  Value that is provided is used to perform a LIKE query on the domain column.  When no value is provided or the parameter is missing, all domains are returned.
+
+            This query will not produce an error message.  Values that produce no results will yield an empty array.
+          required: false
+          schema:
+            type: string
+            example: .com
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Domain'
+    post:
+      tags:
+        - domain
+      description: Adds a new domain.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Domain'
+        description: Domain object
+        required: true
+      responses:
+        '200':
+          $ref: '#/components/responses/DomainObject'
+        '405':
+          $ref: '#/components/responses/InvalidInput'
+    patch:
+      tags:
+        - domain
+      description: Modifies an existing Domain object.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Domain'
+        description: A modified Domain Object.
+        required: true
+      responses:
+        '200':
+          $ref: '#/components/responses/DomainObject'
+        '405':
+          $ref: '#/components/responses/InvalidInput'
+  /domain/{domain}:
+    get:
+      tags:
+        - domain
+      description: Provides information on a specified domain
+      parameters:
+        - in: path
+          name: domain
+          description: >-
+            Fully-qualified domain name to query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/DomainObject'
+        '405':
+          $ref: '#/components/responses/InvalidInput'
+
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+    Domain:
+      type: object
+      properties:
+        domain:
+          type: string
+          description: Fully-qualified domain name
+          example: subdomain.example.com
+        description:
+          type: string
+        activeFlag:
+          type: boolean
+        created:
+          type: string
+          description: The date-time of when the domain was added.
+          format: date-time
+        modified:
+          type: string
+          description: The date-time of when the domain was modified.
+          format: date-time
+  responses:
+    DomainObject:
+      description: Complete information regarding a domain.
+      content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Domain'
+    InvalidInput:
+      description: Invalid input.  ApiResponse message will have error information.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
