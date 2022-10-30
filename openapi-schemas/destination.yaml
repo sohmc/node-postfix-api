@@ -3,7 +3,7 @@ info:
   description: |
     Email Addresses that aliases will forward to.
   version: 1.0.0
-  title: postfix Mail Aliases
+  title: postfix api - destination
   license:
     name: AGPL 3.0
     url: https://www.gnu.org/licenses/agpl-3.0.en.html
@@ -30,7 +30,7 @@ paths:
           schema:
             type: string
         - in: query
-          name: activeFlag
+          name: active
           description: Filter on whether the destination is active or not
           required: false
           schema:
@@ -47,6 +47,7 @@ paths:
                   $ref: '#/components/schemas/Destination'
         '405':
           description: Invalid input
+          $ref: '#/components/responses/InvalidInput'
     post:
       tags:
         - destination
@@ -67,14 +68,45 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Destination'
-        '400':
-          description: Destination already exists
         '405':
           description: Invalid input
+          $ref: '#/components/responses/InvalidInput'
+
+  /destination/{destinationId}:
+    get:
+      tags:
+        - destination
+      summary: Gets Destination information for the specified destination ID.
+      parameters:
+        - in: path
+          name: destinationID
+          description: Destination ID of the email address destination you want to find
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Destination'
+        '405':
+          description: Invalid input
+          $ref: '#/components/responses/InvalidInput'
     patch:
       tags:
         - destination
       summary: Modifies a destination object
+      parameters:
+        - in: path
+          name: destinationID
+          description: Destination ID of the email address destination you want to find
+          required: true
+          schema:
+            type: integer
       requestBody:
         content:
           application/json:
@@ -93,6 +125,7 @@ paths:
                   $ref: '#/components/schemas/Destination'
         '405':
           description: Invalid input
+          $ref: '#/components/responses/InvalidInput'
 components:
   schemas:
     Alias:
