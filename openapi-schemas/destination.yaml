@@ -1,0 +1,172 @@
+openapi: 3.0.3
+info:
+  description: |
+    Email Addresses that aliases will forward to.
+  version: 1.0.0
+  title: postfix Mail Aliases
+  license:
+    name: AGPL 3.0
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
+tags:
+  - name: destination
+    description: Email Addresses that aliases will forward to.
+paths:
+  /destination:
+    get:
+      tags:
+        - destination
+      summary: Gets Destination information
+      parameters:
+        - in: query
+          name: destinationID
+          description: Destination ID of the email address destination you want to find
+          required: false
+          schema:
+            type: integer
+        - in: query
+          name: q
+          description: Query to run against all destination email addresses
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: activeFlag
+          description: Filter on whether the destination is active or not
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Destination'
+        '405':
+          description: Invalid input
+    post:
+      tags:
+        - destination
+      summary: Creates a new destination email address
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Destination'
+        description: Destination object to be added
+        required: true
+      responses:
+        '201':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Destination'
+        '400':
+          description: Destination already exists
+        '405':
+          description: Invalid input
+    patch:
+      tags:
+        - destination
+      summary: Modifies a destination object
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Destination'
+        description: Destination object to be modified
+        required: true
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Destination'
+        '405':
+          description: Invalid input
+components:
+  schemas:
+    Alias:
+      type: object
+      properties:
+        alias:
+          type: string
+          description: The part of the email address before the @.
+        domain:
+          type: string
+          description: The part of the email address after the @.
+        fullEmailAddress:
+          type: string
+          format: email
+          description: Fully-qualified email address.
+        destination:
+          type: string
+          format: email
+          description: Where the email will go after.
+        active:
+          type: boolean
+          description: Describes whether the alias is active or not.  In order for an alias to be active, all connected assets (i.e. the domain, the alias, and the destination) must be active.  When any connected assets are set to `false`, emails will bounce.
+        ignore:
+          type: boolean
+          description: Describes whether the alias will ignore all mail.  Email sent to aliases set to ignore will NOT receive bounce but instead will be silently sent to `/dev/null`.  `active` must be `true` in order for emails to be silently ignored.
+        uuid:
+          type: string
+          format: uuid
+          description: UUID identifying the alias.  Deprecated.
+        count:
+          type: integer
+          format: int32
+          description: The number of times this alias has been sent an email.  Please note that this is in no way at all accurate and should only be used for statistical purposes.
+        created:
+          type: string
+          description: The datetime of when the alias was created.
+          format: date-time
+        modified:
+          type: string
+          description: The datetime of when the alias was last used or modified.
+          format: date-time
+    Destination:
+      type: object
+      properties:
+        destination:
+          type: string
+          format: email
+          description: Fully-qualified email address
+        active:
+          type: boolean
+    Domain:
+      type: object
+      properties:
+        domain:
+          type: string
+          description: Fully-qualified domain name
+        description:
+          type: string
+        active:
+          type: boolean
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+  responses:
+    InvalidInput:
+      description: Invalid input.  ErrorResponse message will have error information.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
