@@ -1,5 +1,3 @@
-const mysql = require('mysql2/promise');
-
 module.exports = {
   'metadata': {
     'endpoint': 'domain',
@@ -184,17 +182,9 @@ async function updateDomainObject(domain, requestBody, allowedProperties) {
 }
 
 async function mysqlQuery(query, queryValues) {
-  const dbConnection = await mysql.createConnection({
-    host: process.env.POSTFIX_HOST,
-    user: process.env.POSTFIX_USER,
-    password: process.env.POSTFIX_PASSWORD,
-    database: process.env.POSTFIX_DB,
-  });
+  const commonFunctions = require('./_common.js');
 
-  const [queryResults, _fields] = await dbConnection.execute(query, queryValues);
-  console.log('mysql Query Results: ' + JSON.stringify(queryResults));
-
-  dbConnection.end();
+  const queryResults = await commonFunctions.sendMysqlQuery(query, queryValues);
 
   return queryResults;
 }

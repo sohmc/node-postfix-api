@@ -69,7 +69,13 @@ paths:
             type: string
       responses:
         '200':
-          $ref: '#/components/responses/DomainObject'
+          description: successful operation will return an array with exactly one domain.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Domain'
         '405':
           $ref: '#/components/responses/InvalidInput'
     patch:
@@ -93,7 +99,13 @@ paths:
         required: true
       responses:
         '200':
-          $ref: '#/components/responses/DomainObject'
+          description: successful operation will return an array with the details of one domain.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Domain'
         '405':
           $ref: '#/components/responses/InvalidInput'
 
