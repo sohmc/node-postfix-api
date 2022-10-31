@@ -3,7 +3,7 @@ const commonFunctions = require('./_common.js');
 module.exports = {
   'metadata': {
     'endpoint': 'destination',
-    'supportedMethods': ['GET'],
+    'supportedMethods': ['GET', 'POST'],
     'description': 'Works on destination objects, providing information about destinations as well as creating destination records.',
   },
 
@@ -48,6 +48,13 @@ module.exports = {
           lambdaResponseObject = await getDestinationInformation(whereClauseArray.join(' AND '), placeholderArray);
         } else {
           console.log('everything failed');
+        }
+      } else if (method === 'POST') {
+        if (!Object.prototype.hasOwnProperty.call(requestBody, 'destination') || requestBody.destination.length == 0) {
+          lambdaResponseObject.body.message = 'destination property required';
+        } else {
+          const placeholderArray = [ requestBody.destination ];
+          lambdaResponseObject = await insertDestinationObject(placeholderArray);
         }
       }
     } catch (error) {
@@ -94,6 +101,32 @@ async function getDestinationInformation(whereClause, placeholderArray) {
 
     returnObject.statusCode = 200;
     returnObject.body = returnArray;
+  }
+
+  return returnObject;
+}
+
+async function insertDestinationObject(placeholderArray) {
+  let returnObject = {
+    statusCode: 405,
+    body: {
+      'code': 405,
+      'type': 'destination',
+      'message': 'destination does not exist.',
+    },
+  };
+
+  const query = 'INSERT INTO destination SET destination=?, active=true';
+
+  // INSERT row into database
+  const queryResults = await commonFunctions.sendMysqlQuery(query, placeholderArray);
+  if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+    // if everything was successful, get the destination information from the database and return it as a response.
+    const whereClause = 'destination=?';
+    returnObject = await getDestinationInformation(whereClause, [placeholderArray[0]]);
+    returnObject.statusCode = 201;
+  } else {
+    returnObject.body.message = 'error inserting destination into table';
   }
 
   return returnObject;

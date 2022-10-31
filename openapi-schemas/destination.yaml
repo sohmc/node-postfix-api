@@ -45,17 +45,17 @@ paths:
     post:
       tags:
         - destination
-      summary: Creates a new destination email address
+      summary: Creates a new destination email address.  Please note that there is a `UNIQUE` restriction on `destination`, meaning you cannot have destinations that go to the exact same place.  This includes inactive/active destinations.  Therefore, if you wish to activate a destination, you must use the `PATCH` method.
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Destination'
-        description: Destination object to be added
+        description: Destination to be added.  Only the `destination` property is required.  All other fields are silently ignored.
         required: true
       responses:
         '201':
-          description: successful operation.
+          description: successful operation will return an array with exactly one destination.
           content:
             application/json:
               schema:
