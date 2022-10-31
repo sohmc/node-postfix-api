@@ -21,7 +21,7 @@ paths:
         - in: query
           name: q
           description: >-
-            Query to run against all domains.  Value that is provided is used to perform a LIKE query on the domain column.  When no value is provided or the parameter is missing, all domains are returned.
+            Query to run against all domains.  Value provided is used to perform a `LIKE` query on the `domain` column.  When no value is provided or the parameter is missing, all domains are returned.
 
             This query will not produce an error message.  Values that produce no results will yield an empty array.
           required: false

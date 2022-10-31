@@ -15,17 +15,11 @@ paths:
     get:
       tags:
         - destination
-      summary: Gets Destination information
+      summary: Searches for Destinations based on provided parameters.  None of the parameters are required.  Calling this endpoint with no parameters will return all records.
       parameters:
         - in: query
-          name: destinationID
-          description: Destination ID of the email address destination you want to find
-          required: false
-          schema:
-            type: integer
-        - in: query
           name: q
-          description: Query to run against all destination email addresses
+          description: Query to run against all destination email addresses.  Value provided is used to perform a `LIKE` query on the `destination` column.
           required: false
           schema:
             type: string
