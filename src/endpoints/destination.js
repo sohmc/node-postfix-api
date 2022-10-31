@@ -2,9 +2,9 @@ const commonFunctions = require('./_common.js');
 
 module.exports = {
   'metadata': {
-    'endpoint': 'domain',
+    'endpoint': 'destination',
     'supportedMethods': ['GET'],
-    'description': 'Works on domain objects, providing information about domains as well as creating domain records.',
+    'description': 'Works on destination objects, providing information about destinations as well as creating destination records.',
   },
 
   async execute(method, pathParameters, queryParameters, requestBody) {
@@ -24,10 +24,30 @@ module.exports = {
 
     try {
       if (method === 'GET') {
+        const allowedParameters = ['q', 'active'];
+
         // if there are path parameters, then do a query for the destinationId provided
         if (pathParameters.length > 0) {
           const whereClause = 'destination_id=?';
           lambdaResponseObject = await getDestinationInformation(whereClause, [pathParameters[0]]);
+        } else if (allowedParameters.findIndex(parameter => Object.prototype.hasOwnProperty.call(queryParameters, parameter)) >= 0) {
+          const whereClauseArray = [];
+          const placeholderArray = [];
+
+          allowedParameters.forEach(property => {
+            if (Object.prototype.hasOwnProperty.call(queryParameters, property)) {
+              if (property == 'q') {
+                whereClauseArray.push('destination LIKE ?');
+                placeholderArray.push('%' + queryParameters[property] + '%');
+              } else {
+                whereClauseArray.push(property + '=?');
+                placeholderArray.push(queryParameters[property]);
+              }
+            }
+          });
+          lambdaResponseObject = await getDestinationInformation(whereClauseArray.join(' AND '), placeholderArray);
+        } else {
+          console.log('everything failed');
         }
       }
     } catch (error) {
