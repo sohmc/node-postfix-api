@@ -3,7 +3,7 @@ const commonFunctions = require('./_common.js');
 module.exports = {
   'metadata': {
     'endpoint': 'destination',
-    'supportedMethods': ['GET', 'POST'],
+    'supportedMethods': ['GET', 'POST', 'PATCH'],
     'description': 'Works on destination objects, providing information about destinations as well as creating destination records.',
   },
 
@@ -55,6 +55,18 @@ module.exports = {
         } else {
           const placeholderArray = [ requestBody.destination ];
           lambdaResponseObject = await insertDestinationObject(placeholderArray);
+        }
+      } else if (method === 'PATCH') {
+        const allowedProperties = ['destination', 'active'];
+
+        // If there is a path parameter and there is at least one accepted property in the request body, then continue
+        if ((pathParameters.length > 0) && (allowedProperties.findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
+
+          lambdaResponseObject = await updateDestinationObject(pathParameters[0], requestBody, allowedProperties);
+        } else {
+          lambdaResponseObject.statusCode = 405;
+          lambdaResponseObject.body.code = 405;
+          lambdaResponseObject.body.message = 'must provide a property to update';
         }
       }
     } catch (error) {
@@ -140,4 +152,43 @@ function createDestinationObject(mysqlRowObject) {
     'destination': mysqlRowObject.destination,
     'active': mysqlRowObject.active,
   };
+}
+
+
+async function updateDestinationObject(destination, requestBody, allowedProperties) {
+  const setClauses = [];
+  const placeholderArray = [];
+  let returnObject = {
+    statusCode: 405,
+    body: {
+      'code': 405,
+      'type': 'destination',
+      'message': 'destination does not exist.',
+    },
+  };
+
+  allowedProperties.forEach(column => {
+    console.log('checking for column ' + column);
+    if (Object.prototype.hasOwnProperty.call(requestBody, column)) {
+      setClauses.push(column + '=?');
+      placeholderArray.push(requestBody[column]);
+    }
+  });
+
+  // destination is always last
+  placeholderArray.push(destination);
+
+  const query = 'UPDATE destination SET ' + setClauses.join(', ') + ' WHERE destination_id=?';
+  const queryResults = await commonFunctions.sendMysqlQuery(query, placeholderArray);
+
+  if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+    // if everything was successful, get the destination information from the database and return it as a response.
+    // destination is always last in the placeholderArray
+    const whereClause = 'destination_id=?';
+    returnObject = await getDestinationInformation(whereClause, [placeholderArray.pop()]);
+  } else {
+    returnObject.body.message = 'error updating destination in table';
+  }
+
+  return returnObject;
 }

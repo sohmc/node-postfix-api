@@ -97,7 +97,7 @@ paths:
       parameters:
         - in: path
           name: destinationID
-          description: Destination ID of the email address destination you want to find
+          description: Destination ID of the email address destination you want to update.
           required: true
           schema:
             type: integer
@@ -106,7 +106,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Destination'
-        description: Destination object to be modified
+        description: Updated Destination object.  Only the `destination` and `active` properties are permitted.  Other properties are silently ignored.  **Note on updating the destination address:** It is RECOMMENDED, but not required, that you only update the destination address for small spelling mistakes or other minor corrections.  The documentation as to why to be completed at another date.
         required: true
       responses:
         '200':
