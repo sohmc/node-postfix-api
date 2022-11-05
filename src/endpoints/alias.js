@@ -33,7 +33,7 @@ module.exports = {
 
         if (pathParameters.length > 0) {
           const whereClause = 'uuid=?';
-          lambdaResponseObject = await getAliasInformation(whereClause, [pathParameters[0]]);
+          lambdaResponseObject = await getAliasInformation([whereClause], [pathParameters[0]]);
         } else if ((pathParameters.length == 0) && (Object.keys(allowedParameters).findIndex((parameter) => Object.prototype.hasOwnProperty.call(queryParameters, parameter)) >= 0)) {
           const whereClauses = [];
           const placeholderArray = [];

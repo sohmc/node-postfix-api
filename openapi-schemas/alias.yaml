@@ -73,10 +73,8 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Alias'
-        '400':
-          description: Parameter provided but produced non-unitary result.
-        '401':
-          description: Parameter not provided or empty.
+        '405':
+          $ref: '#/components/responses/InvalidInput'
   /alias/{uuid}:
     get:
       tags:
@@ -233,6 +231,16 @@ paths:
                 $ref: '#/components/schemas/Alias'
 components:
   schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
     Alias:
       type: object
       properties:
@@ -271,3 +279,16 @@ components:
           type: string
           description: The datetime of when the alias was used.
           format: date-time
+  responses:
+    AliasObject:
+      description: Complete information regarding an alias.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Alias'
+    InvalidInput:
+      description: Invalid input.  ErrorResponse message will have error information.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
