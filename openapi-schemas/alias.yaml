@@ -1,0 +1,273 @@
+openapi: 3.0.3
+info:
+  description: |
+    Manage postfix virtual aliases and their final destinations.
+  version: 1.0.0
+  title: postfix api - alias
+  license:
+    name: AGPL 3.0
+    url: https://www.gnu.org/licenses/agpl-3.0.en.html
+tags:
+  - name: alias
+    description: Information on a single alias
+paths:
+  /alias:
+    get:
+      tags:
+        - alias
+      summary: Gets alias information
+      description: >-
+        Provides information for aliases.  Must provide either `alias` or `q`
+        parameter.  Other parameters only apply when `q` is used and are
+        optional.
+      parameters:
+        - name: alias
+          in: query
+          description: >-
+            Fully-qualified email address to search.  Looks for exact results
+            only.  Please note that it is possible that one alias has multiple
+            destinations thus multiple entries may be returned.
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: q
+          description: >-
+            Query to run against all aliases email addresses.  Value that is
+            provided is used to perform a LIKE query on the alias column.  When
+            no value is provided, and the `alias` or the `q` parameter is
+            missing, all aliases are returned.
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: destination
+          description: >-
+            Valid Destination email address.  When provided, the endpoint will
+            return results that only go to provided Destination.  Destination 
+            values are not validated prior to query and may result in no 
+            results.
+          schema:
+            type: string
+            format: email
+        - in: query
+          name: active
+          description: Filter on whether the destination is active or not
+          required: false
+          schema:
+            type: boolean
+            default: true
+        - in: query
+          name: ignore
+          description: Filter on whether the alias is being ignored
+          required: false
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alias'
+        '400':
+          description: Parameter provided but produced non-unitary result.
+        '401':
+          description: Parameter not provided or empty.
+  /alias/{uuid}:
+    get:
+      tags:
+        - alias
+      summary: Gets alias information
+      description: Multiple status values can be provided with comma separated strings
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of the alias you want to search.  Looks for exact results only.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/Alias'
+        '400':
+          description: Parameter provided but produced non-unitary result.
+        '401':
+          description: Parameter not provided or empty.
+    patch:
+      tags:
+        - alias
+      summary: Modify an existing alias with details provided.
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of the alias you want to update.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Alias'
+        description: >
+          Alias object with changes you want to update.  Please note that the
+          following fields are quietly ignored:
+            - fullEmailAddress
+            - uuid
+            - count
+            
+          fullEmailAddress will be updated automatically if changes occur to the
+          alias or the domain
+        required: true
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alias'
+        '405':
+          description: Invalid input
+  /alias/{uuid}/count:
+    get:
+      tags:
+        - alias
+      summary: >-
+        Increments the count field by one (and subsequently updates the modified
+        column).
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of the alias you want to increment
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alias'
+  /alias/{uuid}/activate:
+    get:
+      tags:
+        - alias
+      summary: >-
+        Explicitly sets the alias to active.  Activated aliases will accept
+        emails and then be processed by the server.  This endpoint will set the
+        active field to TRUE and the ignore field to FALSE.
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of the alias you want to activate.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alias'
+  /alias/{uuid}/deactivate:
+    get:
+      tags:
+        - alias
+      summary: >-
+        Explicitly sets the alias to inactive.  Deactivated aliases will cause
+        emails sent to it to bounce.
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of the alias you want to deactivate.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alias'
+  /alias/{uuid}/ignore:
+    get:
+      tags:
+        - alias
+      summary: >-
+        Explicitly sets the alias to ignore.  Aliases set to ignore will 
+        accept emails but will quietly drop them from further processing.
+        In other words: senders will not receive a bounce but the destination 
+        will not receive an email.
+      parameters:
+        - name: uuid
+          in: path
+          description: UUID of the alias you want to ignore.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alias'
+components:
+  schemas:
+    Alias:
+      type: object
+      properties:
+        alias:
+          type: string
+          description: The part of the email address before the @.
+        domain:
+          type: string
+          description: The part of the email address after the @.  All domains MUST be listed in the `domain` table, which can be accessed using the `/domain` endpoint.
+          example: subdomain.example.com
+        fullEmailAddress:
+          type: string
+          format: email
+        destination:
+          type: string
+          format: email
+          description: A Destination email address.  Destination MUST be listed in the `destination` table, which can be accessed using the `/destination` endpoint.
+        active:
+          type: boolean
+          description: boolean that shows whether the aliases is active and will accept email.  Please note that the alias, destination, and domain MUST all be active in order for the alias to be able to accept mail.
+        ignore:
+          type: boolean
+          description: boolean that shows whether the aliases is active but will ignore emails.  When the active field is `true` and the `ignore` field is also `true`, then mail sent to the alias is accepted, but is quietly disposed, i.e. the sender does not receive a bounce and the destination does not receive the email.
+        uuid:
+          type: string
+          format: uuid
+        count:
+          type: integer
+          format: int32
+          description: The number of times this alias has been emailed.  Please note that there is no guarantee to the accuracy of this number.  It is used for statistical purposes only.
+        created:
+          type: string
+          description: The datetime of when the alias was created.
+          format: date-time
+        modified:
+          type: string
+          description: The datetime of when the alias was used.
+          format: date-time
