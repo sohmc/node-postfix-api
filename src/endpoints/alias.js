@@ -36,6 +36,7 @@ module.exports = {
         if (pathParameters.length > 0) {
           const uuid = pathParameters[0];
 
+          // Check to see if there is a second path parameter (e.g. activate, deactivate, count)
           if (pathParameters.length == 2) {
             const updateAliasRequestBody = {};
 
@@ -59,11 +60,13 @@ module.exports = {
 
             if (Object.keys(updateAliasRequestBody).length > 0) {
               lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody, allowedParameters);
+            } else if (pathParameters[1] === 'count') {
+              lambdaResponseObject = await incrementAliasCount(uuid);
             }
           } else {
             // If the length of pathParameters is essentially not 2, the endpoint is
             // not really supported but we'll run it as if the uuid was provided only.
-            lambdaResponseObject = await getAliasInformation(whereClauses, placeholderArray);
+            lambdaResponseObject = await getAliasInformation(['uuid=?'], [uuid]);
           }
 
         } else if ((pathParameters.length == 0) && (Object.keys(allowedParameters).findIndex((parameter) => Object.prototype.hasOwnProperty.call(queryParameters, parameter)) >= 0)) {
@@ -206,6 +209,27 @@ async function insertAliasObject(placeholderArray) {
     returnObject.statusCode = 201;
   } else {
     returnObject.body.message = 'error running stored procedure create_alias.';
+  }
+
+  return returnObject;
+}
+
+async function incrementAliasCount(uuid) {
+  const returnObject = {
+    statusCode: 405,
+  };
+
+  const query = 'UPDATE `aliases` SET count = count + 1 WHERE uuid = ?';
+  const queryResults = await commonFunctions.sendMysqlQuery(query, [uuid]);
+
+  if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+    returnObject.statusCode = 204;
+  } else {
+    returnObject.body = {
+      'code': 405,
+      'type': 'alias',
+      'message': 'Could not increment alias',
+    };
   }
 
   return returnObject;
