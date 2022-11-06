@@ -1,12 +1,12 @@
 module.exports = {
   'metadata': {
     'endpoint': 'alias',
-    'supportedMethods': ['GET'],
+    'supportedMethods': ['GET', 'POST'],
     'description': 'Works on alias objects, providing information about aliases as well as creating alias records.',
   },
 
   async execute(method, pathParameters, queryParameters, requestBody) {
-    console.log(`Received ${method} request with pathParameters ${JSON.stringify(pathParameters)} and queryParameters ${JSON.stringify(queryParameters)}`);
+    console.log(`Received ${method} request with pathParameters ${JSON.stringify(pathParameters)} queryParameters ${JSON.stringify(queryParameters)} requestBody ${JSON.stringify(requestBody)}`);
 
     let lambdaResponseObject = {
       statusCode: 418,
@@ -56,13 +56,15 @@ module.exports = {
         }
 
       } else if (method === 'POST') {
-        console.log('requestBody: ' + JSON.stringify(requestBody));
-        if (!Object.prototype.hasOwnProperty.call(requestBody, 'domain') || requestBody.domain.length == 0) {
-          lambdaResponseObject.body.type = 'domain';
-          lambdaResponseObject.body.message = 'domain property required';
+        const requiredProperties = ['alias', 'domain', 'destination'];
+
+        if (requiredProperties.findIndex(property => Object.prototype.hasOwnProperty.call(requestBody, property)) === -1) {
+          // return error message with property that is missing
+          lambdaResponseObject.body.message = 'missing required property: ' + requiredProperties[requiredProperties.findIndex(property => Object.prototype.hasOwnProperty.call(requestBody, property))];
         } else {
-          const placeholderArray = [ requestBody.domain, requestBody.description || '', requestBody.active || true ];
-          lambdaResponseObject = await insertDomainObject(placeholderArray);
+          const aliasObject = [requestBody.alias, requestBody.domain, requestBody.destination];
+
+          lambdaResponseObject = await insertAliasObject(aliasObject);
         }
       } else if (method === 'PATCH') {
         console.log('requestBody: ' + JSON.stringify(requestBody));
@@ -146,28 +148,28 @@ function createAliasObject(mysqlRowObject) {
   };
 }
 
-async function insertDomainObject(placeholderArray) {
+async function insertAliasObject(placeholderArray) {
   let returnObject = {
     statusCode: 405,
     body: {
       'code': 405,
-      'type': 'domain',
-      'message': 'Domain does not exist.',
+      'type': 'alias',
+      'message': 'Could not insert alias.',
     },
   };
 
-  const query = 'INSERT INTO domain SET domain=?, description=?, active=?, transport="virtual",  created=NOW(), modified=NOW()';
+  const query = 'CALL create_alias(?, ?, ?)';
 
   // INSERT row into database
   const queryResults = await mysqlQuery(query, placeholderArray);
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
-    const whereClause = 'domain=?';
-    returnObject = await getAliasInformation(whereClause, [placeholderArray[0]]);
+    const whereClauses = ['full_address=?', 'destination=?'];
+    const getAliasPlaceholders = [placeholderArray[0] + '@' + placeholderArray[1], placeholderArray[2]];
+    returnObject = await getAliasInformation(whereClauses, getAliasPlaceholders);
     returnObject.statusCode = 201;
   } else {
-    returnObject.body.type = 'domain';
-    returnObject.body.message = 'error inserting domain into table';
+    returnObject.body.message = 'error running stored procedure create_alias.';
   }
 
   return returnObject;

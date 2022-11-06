@@ -75,6 +75,39 @@ paths:
                   $ref: '#/components/schemas/Alias'
         '405':
           $ref: '#/components/responses/InvalidInput'
+    post:
+      tags:
+        - alias
+      description: Adds a new alias.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Alias'
+        description: >-
+          Exactly one Alias object.  Please note that only the following properties are accepted:
+            - alias*
+            - domain*
+            - destination*
+            - active
+            - ignore
+
+          All other fields are silently ignored.  Properties marked with `*` are required.
+          
+
+          The `domain` property must be a fully-qualified domain name that is listed under the `/domain` endpoint.  Additionally, the `destination` must be a registered Destination that is listed under the `/destination` endpoint.  Providing a value that does not exist will result in an error.
+
+
+          The combination of `alias`, `domain`, and `destination` MUST be unique within the table.  Duplicate entries will result in an error.
+
+
+          `full_address` and `uuid` will be automatically populated.
+        required: true
+      responses:
+        '201':
+          $ref: '#/components/responses/AliasObject'
+        '405':
+          $ref: '#/components/responses/InvalidInput'
   /alias/{uuid}:
     get:
       tags:
@@ -127,7 +160,9 @@ paths:
             - count
             
           fullEmailAddress will be updated automatically if changes occur to the
-          alias or the domain
+          alias or the domain.  Please note that while you can use this end point
+          to modify the `active` or `ignore` properties, it is RECOMMENDED that
+          you use the respective endpoints to make these changes.
         required: true
       responses:
         '200':
@@ -253,6 +288,7 @@ components:
           example: subdomain.example.com
         fullEmailAddress:
           type: string
+          description: A concatenation of the alias and the domain, with an `@` (at sign) between them, resulting in a fully-qualified email address.
           format: email
         destination:
           type: string
@@ -261,11 +297,14 @@ components:
         active:
           type: boolean
           description: boolean that shows whether the aliases is active and will accept email.  Please note that the alias, destination, and domain MUST all be active in order for the alias to be able to accept mail.
+          default: true
         ignore:
           type: boolean
           description: boolean that shows whether the aliases is active but will ignore emails.  When the active field is `true` and the `ignore` field is also `true`, then mail sent to the alias is accepted, but is quietly disposed, i.e. the sender does not receive a bounce and the destination does not receive the email.
+          default: false
         uuid:
           type: string
+          description: An universally unique identifier primarily used to differentiate the same alias going to different Destinations.  Please note that UUIDs are subject to change and should not be saved.  UUIDs should always be looked up using the `/alias` endpoint.
           format: uuid
         count:
           type: integer
