@@ -86,14 +86,12 @@ paths:
               $ref: '#/components/schemas/Alias'
         description: >-
           Exactly one Alias object.  Please note that only the following properties are accepted:
-            - alias*
-            - domain*
-            - destination*
-            - active
-            - ignore
+            - alias
+            - domain
+            - destination
 
-          All other fields are silently ignored.  Properties marked with `*` are required.
-          
+          All other fields are silently ignored.
+
 
           The `domain` property must be a fully-qualified domain name that is listed under the `/domain` endpoint.  Additionally, the `destination` must be a registered Destination that is listed under the `/destination` endpoint.  Providing a value that does not exist will result in an error.
 
@@ -101,7 +99,7 @@ paths:
           The combination of `alias`, `domain`, and `destination` MUST be unique within the table.  Duplicate entries will result in an error.
 
 
-          `full_address` and `uuid` will be automatically populated.
+          `full_address` and `uuid` will be automatically populated.  All new aliases are set to active as default with their `ignore` property set to `false`.
         required: true
       responses:
         '201':
@@ -153,16 +151,14 @@ paths:
             schema:
               $ref: '#/components/schemas/Alias'
         description: >
-          Alias object with changes you want to update.  Please note that the
-          following fields are quietly ignored:
-            - fullEmailAddress
-            - uuid
-            - count
+          Alias object with changes you want to update.  Please note that only the following properties are accepted:
+            - alias
+            - domain
+            - destination
+            - active
+            - ignore
             
-          fullEmailAddress will be updated automatically if changes occur to the
-          alias or the domain.  Please note that while you can use this end point
-          to modify the `active` or `ignore` properties, it is RECOMMENDED that
-          you use the respective endpoints to make these changes.
+          fullEmailAddress will be updated automatically if changes occur to the alias or the domain.  Please note that while you can use this end point to modify the `active` or `ignore` properties, it is RECOMMENDED that you use the respective endpoints to make these changes.
         required: true
       responses:
         '200':

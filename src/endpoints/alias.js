@@ -1,7 +1,9 @@
+const commonFunctions = require('./_common.js');
+
 module.exports = {
   'metadata': {
     'endpoint': 'alias',
-    'supportedMethods': ['GET', 'POST'],
+    'supportedMethods': ['GET', 'POST', 'PATCH'],
     'description': 'Works on alias objects, providing information about aliases as well as creating alias records.',
   },
 
@@ -32,8 +34,33 @@ module.exports = {
         };
 
         if (pathParameters.length > 0) {
-          const whereClause = 'uuid=?';
-          lambdaResponseObject = await getAliasInformation([whereClause], [pathParameters[0]]);
+          const whereClauses = ['uuid=?'];
+          const placeholderArray = [pathParameters[0]];
+
+          if (pathParameters.length == 2) {
+            switch (pathParameters[1]) {
+            case 'activate':
+              true;
+              break;
+
+            case 'deactivate':
+              true;
+              break;
+
+            case 'ignore':
+              true;
+              break;
+
+            default:
+              break;
+            }
+
+          } else {
+            // If the length of pathParameters is essentially not 2, the endpoint is
+            // not really supported but we'll run it as if the uuid was provided only.
+            lambdaResponseObject = await getAliasInformation(whereClauses, placeholderArray);
+          }
+
         } else if ((pathParameters.length == 0) && (Object.keys(allowedParameters).findIndex((parameter) => Object.prototype.hasOwnProperty.call(queryParameters, parameter)) >= 0)) {
           const whereClauses = [];
           const placeholderArray = [];
@@ -67,12 +94,16 @@ module.exports = {
           lambdaResponseObject = await insertAliasObject(aliasObject);
         }
       } else if (method === 'PATCH') {
-        console.log('requestBody: ' + JSON.stringify(requestBody));
-
-        const allowedProperties = ['description', 'active'];
+        const allowedProperties = {
+          'alias': 'alias_address',
+          'domain': 'domain_id',
+          'destination': 'destination_id',
+          'active': 'active',
+          'ignore': 'ignore_alias',
+        };
 
         // If there is a path parameter and there is at least one accepted property in the request body, then continue
-        if ((pathParameters.length > 0) && (allowedProperties.findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
+        if ((pathParameters.length > 0) && (Object.keys(allowedProperties).findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
 
           lambdaResponseObject = await updateDomainObject(pathParameters[0], requestBody, allowedProperties);
         } else {
@@ -116,7 +147,7 @@ async function getAliasInformation(whereClauses, placeholderArray) {
   };
 
   const query = 'SELECT * FROM mail_aliases WHERE ' + whereClause;
-  const aliasInformation = await mysqlQuery(query, placeholderArray);
+  const aliasInformation = await commonFunctions.sendMysqlQuery(query, placeholderArray);
 
   if ((aliasInformation.length >= 1) && Object.prototype.hasOwnProperty.call(aliasInformation[0], 'alias_address')) {
     const returnArray = [];
@@ -161,7 +192,7 @@ async function insertAliasObject(placeholderArray) {
   const query = 'CALL create_alias(?, ?, ?)';
 
   // INSERT row into database
-  const queryResults = await mysqlQuery(query, placeholderArray);
+  const queryResults = await commonFunctions.sendMysqlQuery(query, placeholderArray);
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
     const whereClauses = ['full_address=?', 'destination=?'];
@@ -175,50 +206,78 @@ async function insertAliasObject(placeholderArray) {
   return returnObject;
 }
 
-async function updateDomainObject(domain, requestBody, allowedProperties) {
+async function updateDomainObject(uuid, requestBody, allowedProperties) {
   const setClauses = [];
   const placeholderArray = [];
+
   let returnObject = {
     statusCode: 405,
     body: {
       'code': 405,
-      'type': 'domain',
-      'message': 'Domain does not exist.',
+      'type': 'alias',
+      'message': 'Alias does not exist.',
     },
   };
 
-  allowedProperties.forEach(column => {
-    console.log('checking for column ' + column);
-    if (Object.prototype.hasOwnProperty.call(requestBody, column)) {
-      setClauses.push(column + '=?');
-      placeholderArray.push(requestBody[column]);
+  for (const property in allowedProperties) {
+    console.log('checking for property ' + property);
+    if (Object.prototype.hasOwnProperty.call(requestBody, property)) {
+      setClauses.push(allowedProperties[property] + '=?');
+
+      let query = '';
+      const primaryKeyWhereClause = [];
+
+      switch (property) {
+      case 'domain':
+        // get domain id
+        query = 'SELECT `domain_id` as PRIMARY_KEY FROM `domain` WHERE `domain` = ?';
+        primaryKeyWhereClause.push(requestBody[property]);
+        true;
+        break;
+
+      case 'destination':
+        // get destination id
+        query = 'SELECT `destination_id` as PRIMARY_KEY FROM `destination` WHERE `destination` = ?';
+        primaryKeyWhereClause.push(requestBody[property]);
+        true;
+        break;
+
+      default:
+        true;
+        break;
+      }
+
+      // If there is a query set, then find the primary key and add that to our placeholders
+      if (query.length > 0) {
+        console.log('Checking for primary key');
+        const queryResults = await commonFunctions.sendMysqlQuery(query, primaryKeyWhereClause);
+
+        if ((queryResults.length > 0) && Object.prototype.hasOwnProperty.call(queryResults[0], 'PRIMARY_KEY')) {
+          placeholderArray.push(queryResults[0].PRIMARY_KEY);
+        } else {
+          console.log('primary key check failed: ' + JSON.stringify(queryResults));
+          returnObject.body.message = 'Unable to determine primary key for ' + property + ': ' + requestBody[property];
+        }
+      } else {
+        placeholderArray.push(requestBody[property]);
+      }
     }
-  });
+  }
 
-  // domain is always last
-  placeholderArray.push(domain);
+  // uuid is always last
+  placeholderArray.push(uuid);
 
-  const query = 'UPDATE domain SET ' + setClauses.join(', ') + ' WHERE domain=?';
-  console.log('query: ' + query);
-  const queryResults = await mysqlQuery(query, placeholderArray);
+  const query = 'UPDATE `aliases` SET ' + setClauses.join(', ') + ' WHERE `uuid`=?';
+  const queryResults = await commonFunctions.sendMysqlQuery(query, placeholderArray);
 
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
     // domain is always last in the placeholderArray
-    const whereClause = 'domain=?';
-    returnObject = await getAliasInformation(whereClause, [placeholderArray.pop()]);
+    const whereClauses = ['uuid=?'];
+    returnObject = await getAliasInformation(whereClauses, [uuid]);
   } else {
-    returnObject.body.type = 'domain';
-    returnObject.body.message = 'error updating domain in table';
+    returnObject.body.message = 'error updating Alias in table';
   }
 
   return returnObject;
-}
-
-async function mysqlQuery(query, queryValues) {
-  const commonFunctions = require('./_common.js');
-
-  const queryResults = await commonFunctions.sendMysqlQuery(query, queryValues);
-
-  return queryResults;
 }
