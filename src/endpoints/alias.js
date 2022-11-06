@@ -34,27 +34,32 @@ module.exports = {
         };
 
         if (pathParameters.length > 0) {
-          const whereClauses = ['uuid=?'];
-          const placeholderArray = [pathParameters[0]];
+          const uuid = pathParameters[0];
 
           if (pathParameters.length == 2) {
+            const updateAliasRequestBody = {};
+
             switch (pathParameters[1]) {
             case 'activate':
-              true;
+              updateAliasRequestBody.active = true;
+              updateAliasRequestBody.ignore = false;
               break;
 
             case 'deactivate':
-              true;
+              updateAliasRequestBody.active = false;
               break;
 
             case 'ignore':
-              true;
+              updateAliasRequestBody.ignore = true;
               break;
 
             default:
               break;
             }
 
+            if (Object.keys(updateAliasRequestBody).length > 0) {
+              lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody, allowedParameters);
+            }
           } else {
             // If the length of pathParameters is essentially not 2, the endpoint is
             // not really supported but we'll run it as if the uuid was provided only.
@@ -105,7 +110,7 @@ module.exports = {
         // If there is a path parameter and there is at least one accepted property in the request body, then continue
         if ((pathParameters.length > 0) && (Object.keys(allowedProperties).findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
 
-          lambdaResponseObject = await updateDomainObject(pathParameters[0], requestBody, allowedProperties);
+          lambdaResponseObject = await updateAliasObject(pathParameters[0], requestBody, allowedProperties);
         } else {
           lambdaResponseObject.statusCode = 405;
           lambdaResponseObject.body.code = 405;
@@ -206,7 +211,7 @@ async function insertAliasObject(placeholderArray) {
   return returnObject;
 }
 
-async function updateDomainObject(uuid, requestBody, allowedProperties) {
+async function updateAliasObject(uuid, requestBody, allowedProperties) {
   const setClauses = [];
   const placeholderArray = [];
 
