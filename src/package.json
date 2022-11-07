@@ -5,6 +5,7 @@
   "scripts": {
     "predeploy": "rm function.zip ; zip -r function.zip ./*",
     "deploy": "bash ../.ci/deploy-lambda.bash",
+    "deploy-ses": "npm run predeploy && bash ../.ci/deploy-lambda.bash update ../.ci/ses.env",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

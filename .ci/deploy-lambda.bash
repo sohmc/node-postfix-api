@@ -131,6 +131,10 @@ if [[ ! -f function.zip ]]; then
   exit 1;
 fi
 
+if [[ -f $2 ]]; then
+  loadEnv $2
+fi
+
 if [[ $1 == 'create' ]]; then
   createFunction && createFunctionUrl
 elif [[ $1 == 'update' ]]; then

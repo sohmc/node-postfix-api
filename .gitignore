@@ -1,5 +1,6 @@
 node_modules/
 .env
+ses.env
 *.zip
 instance-to-rds.sql
 migration_plan.md
