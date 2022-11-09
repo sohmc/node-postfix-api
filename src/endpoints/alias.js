@@ -7,7 +7,7 @@ module.exports = {
     'description': 'Works on alias objects, providing information about aliases as well as creating alias records.',
   },
 
-  async execute(method, pathParameters, queryParameters, requestBody) {
+  async execute(method, pathParameters = [], queryParameters = {}, requestBody = {}) {
     console.log(`Received ${method} request with pathParameters ${JSON.stringify(pathParameters)} queryParameters ${JSON.stringify(queryParameters)} requestBody ${JSON.stringify(requestBody)}`);
 
     let lambdaResponseObject = {
