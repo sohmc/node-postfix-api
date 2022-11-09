@@ -47,7 +47,7 @@ exports.handler = (lambdaEvent, lambdaContext, callback) => {
   Promise.all(emailDeliverable).then((emailDeliverableResolution) => {
     console.log('emailDeliverable: ' + emailDeliverableResolution);
     let sesLambdaDisposition = null;
-    if (emailDeliverable.every(disposition => disposition === false)) sesLambdaDisposition = 'CONTINUE';
+    if (emailDeliverableResolution.every(disposition => disposition == false)) sesLambdaDisposition = 'CONTINUE';
     else sesLambdaDisposition = 'STOP_RULE';
     return sesLambdaDisposition;
   }).then((disposition) => {
