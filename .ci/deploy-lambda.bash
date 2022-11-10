@@ -1,4 +1,4 @@
-#!/bin/bash -evx
+#!/bin/bash -ex
 
 ##### ENVIRONMENT FILES #####
 envFiles=("../.ci/lambda.env" "../.ci/.env" ".env")
@@ -87,14 +87,21 @@ function createFunctionUrl {
 }
 
 function updateFunctionMetadata {
-  if [[ -z $LAMBDA_ENV_VARS ]] && [[ -f .env ]]; then
-    echo "Parsing function .env file..."
-    LAMBDA_ENV_VARS=$(sed -z 's/\n/,/g' .env)
+  # First build Lambda Environment Variable argument to send with the command
+  if [[ -z ${LAMBDA_ENV_VARS+x} ]]; then
+    LOCAL_ENV=.env
+    if [[ -f $1 ]]; then
+      LOCAL_ENV=$1
+    fi
+
+    echo "Parsing function env file ${LOCAL_ENV}..."
+    LAMBDA_ENV_VARS=$(sed -z 's/\n/,/g' ${LOCAL_ENV})
 
     echo $LAMBDA_ENV_VARS
   fi
 
-  if [[ ! -z $GITHUB_ACTION ]]; then
+  # Attach build information
+  if [[ ! -z ${GITHUB_ACTION+x} ]]; then
     echo "Hello Github Actions Worflow: ${GITHUB_WORKFLOW}"
     GIT_SHA=$GITHUB_SHA
     BUILD_ID=${GITHUB_RUN_NUMBER}
@@ -107,6 +114,18 @@ function updateFunctionMetadata {
   fi
 
   LAMBDA_ENV_VARS=${LAMBDA_ENV_VARS},SHA=${GIT_SHA},BUILD_ID=${BUILD_ID}
+
+  # Attach VPC and Security Groups
+  LAMBDA_VPC=''
+  if [[ ! -z ${LAMBDA_SUBNETS+x} ]]; then
+    LAMBDA_VPC="SubnetIds=${LAMBDA_SUBNETS}"
+  fi
+  if [[ ! -z ${LAMBDA_SGS+x} ]]; then
+    LAMBDA_VPC="${LAMBDA_VPC},SecurityGroupIds=${LAMBDAA_SGS}"
+  fi
+  if [[ ! -z ${LAMBDA_VPC} ]]; then
+    LAMBDA_VPC="--vpc-config ${LAMBDA_VPC}"
+  fi
 
   echo "Updating Lambda Function's Metadata..."
   aws lambda update-function-configuration \
