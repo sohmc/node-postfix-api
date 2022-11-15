@@ -1,22 +1,21 @@
-const mysql = require('mysql2/promise');
+const { DynamoDB } = require('@aws-sdk/client-dynamodb');
+const client = new DynamoDB({ region: 'us-east-1'});
+
+const { DynamoDBDocument, GetCommand } = require('@aws-sdk/lib-dynamodb');
+const ddbDocClient = DynamoDBDocument.from(client);
 
 module.exports = {
-  async sendMysqlQuery(query, queryValues) {
-    console.log('query: ' + query);
-    console.log('placeholders: ' + JSON.stringify(queryValues));
+  async getItem(_alias, _domain) {
+    const params = {
+      'TableName': 'mailAliasesImport-9f39f536549d',
+      'Key': {
+        'alias_address': 'testing.zttttgs9',
+        'domain': 'capricadev.tk',
+      },
+    };
 
-    const dbConnection = await mysql.createConnection({
-      host: process.env.POSTFIX_HOST,
-      user: process.env.POSTFIX_USER,
-      password: process.env.POSTFIX_PASSWORD,
-      database: process.env.POSTFIX_DB,
-    });
-
-    const [queryResults, _fields] = await dbConnection.execute(query, queryValues);
-    console.log('mysql Query Results: ' + JSON.stringify(queryResults));
-
-    dbConnection.end();
-
-    return queryResults;
+    const data = await ddbDocClient.send(new GetCommand(params));
+    console.log('Success', JSON.stringify(data));
+    return data;
   },
 };
