@@ -26,7 +26,7 @@ module.exports = {
       if (method === 'GET') {
         // If there are path parameters, then do a query for the alias uuid provided
         const allowedParameters = {
-          'alias': 'full_address',
+          'alias': 'alias_address',
           'q': 'full_address',
           'destination': 'destination',
           'active': 'active',
@@ -66,7 +66,21 @@ module.exports = {
           } else {
             // If the length of pathParameters is essentially not 2, the endpoint is
             // not really supported but we'll run it as if the uuid was provided only.
-            lambdaResponseObject = await getAliasInformation(['uuid=?'], [uuid]);
+            const whereClauses = [];
+            const placeholdersObject = {};
+            const emailParts = pathParameters[0].split('@', 2);
+
+            // If an '@' symbol was sent, then parse it into alias + domain
+            if (emailParts.length == 2) {
+              placeholdersObject.alias_address = emailParts[0];
+              placeholdersObject.domain = emailParts[1];
+            } else {
+            // If the parameter couldn't be split into two, assume it's
+            // a domain so that the call to DynamoDB doesn't fail.
+              placeholdersObject.domain = emailParts[0];
+            }
+
+            lambdaResponseObject = await getAliasInformation(whereClauses, placeholdersObject);
           }
 
         } else if ((pathParameters.length == 0) && (Object.keys(allowedParameters).findIndex((parameter) => Object.prototype.hasOwnProperty.call(queryParameters, parameter)) >= 0)) {
@@ -141,9 +155,8 @@ module.exports = {
   },
 };
 
-async function getAliasInformation(whereClauses, placeholderArray) {
-  console.log('getAliasInformation: ' + whereClauses + ':' + placeholderArray);
-  const whereClause = whereClauses.join(' AND ');
+async function getAliasInformation(whereClauses, placeholdersObject) {
+  console.log('getAliasInformation: ' + whereClauses + ':' + JSON.stringify(placeholdersObject));
 
   const returnObject = {
     statusCode: 405,
@@ -154,8 +167,13 @@ async function getAliasInformation(whereClauses, placeholderArray) {
     },
   };
 
-  const query = 'SELECT * FROM mail_aliases WHERE ' + whereClause;
-  const aliasInformation = await commonFunctions.sendMysqlQuery(query, placeholderArray);
+  let aliasInformation = {};
+  if (Object.prototype.hasOwnProperty.call(placeholdersObject, 'alias_address')) {
+    aliasInformation = await commonFunctions.getItem(placeholdersObject.domain, placeholdersObject.alias_address);
+  } else {
+    const KeyConditionExpression = whereClauses.join(' AND ');
+    aliasInformation = await commonFunctions.aliasQuery(KeyConditionExpression, {});
+  }
 
   if ((aliasInformation.length >= 1) && Object.prototype.hasOwnProperty.call(aliasInformation[0], 'alias_address')) {
     const returnArray = [];
