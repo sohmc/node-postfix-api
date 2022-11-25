@@ -66,21 +66,18 @@ module.exports = {
           } else {
             // If the length of pathParameters is essentially not 2, the endpoint is
             // not really supported but we'll run it as if the uuid was provided only.
-            const whereClauses = [ 'uuid = :uuid' ];
             const placeholderObject = { 'uuid': uuid };
 
-            lambdaResponseObject = await getAliasInformation(whereClauses, placeholderObject);
+            lambdaResponseObject = await getAliasInformation(placeholderObject);
           }
 
         } else if ((pathParameters.length == 0) && (Object.keys(allowedParameters).findIndex((parameter) => Object.prototype.hasOwnProperty.call(queryParameters, parameter)) >= 0)) {
-          const whereClauses = [];
           const placeholderObject = {};
 
           Object.keys(allowedParameters).forEach(parameter => {
             console.log('checking for parameter ' + parameter);
             if (Object.prototype.hasOwnProperty.call(queryParameters, parameter)) {
               if (parameter == 'q') {
-                whereClauses.push('contains(' + allowedParameters[parameter] + ', :q)');
                 placeholderObject[allowedParameters[parameter]] = queryParameters[parameter];
               } else if (parameter == 'alias') {
                 const emailParts = queryParameters[parameter].split('@', 2);
@@ -95,13 +92,12 @@ module.exports = {
                   placeholderObject.domain = emailParts[0];
                 }
               } else {
-                whereClauses.push(allowedParameters[parameter] + ' = ?');
                 placeholderObject[allowedParameters[parameter]] = queryParameters[parameter];
               }
             }
           });
 
-          lambdaResponseObject = await getAliasInformation(whereClauses, placeholderObject);
+          lambdaResponseObject = await getAliasInformation(placeholderObject);
         }
 
       } else if (method === 'POST') {
@@ -155,8 +151,8 @@ module.exports = {
   },
 };
 
-async function getAliasInformation(whereClauses, placeholderObject) {
-  console.log('getAliasInformation: ' + whereClauses + ':' + JSON.stringify(placeholderObject));
+async function getAliasInformation(placeholderObject) {
+  console.log('getAliasInformation: ' + JSON.stringify(placeholderObject));
 
   const returnObject = {
     statusCode: 405,

@@ -8,7 +8,7 @@ module.exports = {
   async getItem(placeholderObject) {
     console.log('common.js:getItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
     const params = {
-      'TableName': 'mailAliasesImport-9fbda3b75639',
+      'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
       'Key': {
         'alias_address': placeholderObject.alias_address,
         'domain': placeholderObject.domain,
@@ -37,7 +37,7 @@ module.exports = {
     };
 
     const params = {
-      'TableName': 'mailAliasesImport-9fbda3b75639',
+      'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
       'KeyConditionExpression': '',
       'ExpressionAttributeNames': {},
       'ExpressionAttributeValues': {},
