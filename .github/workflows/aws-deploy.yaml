@@ -58,13 +58,13 @@ jobs:
         run: npm run zip
 
       - name: ls
-        run: echo "${{ env.GITHUB_WORKSPACE }}"
+        run: echo "$GITHUB_WORKSPACE"
 
       - name: Upload Zip File for Downstream Use
         uses: actions/upload-artifact@v3
         with:
           name: function.zip
-          path: ${{ env.GITHUB_WORKSPACE }}/src/function.zip
+          path: $GITHUB_WORKSPACE/src/function.zip
           retention-days: 7
           if-no-files-found: error
 
