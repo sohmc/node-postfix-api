@@ -19,7 +19,7 @@ jobs:
       matrix:
         node-version: [16]
 
-    name: Node ${{ matrix.node-version }} build
+    name: Node ${{ matrix.node-version }} test
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3

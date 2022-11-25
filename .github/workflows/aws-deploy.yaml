@@ -55,7 +55,7 @@ jobs:
         run: npm i --only=prod
 
       - name: zip up the folder
-        run: npm run build
+        run: npm run deploy
 
       - name: Upload Zip File for Downstream Use
         uses: actions/upload-artifact@v3
@@ -88,7 +88,7 @@ jobs:
     name: Deploy to AWS - ${{ matrix.environment }} - nodejs ${{ matrix.node-version }} 
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download a single artifact
         uses: actions/download-artifact@v3
