@@ -101,7 +101,7 @@ jobs:
           name: function.zip
       
       - name: List ZIP contents
-        run: unzip -l ${{ steps.download.outputs.download-artifact }}/function.zip
+        run: unzip -l ${{ steps.download-artifact.outputs.download-path }}/function.zip
 
       # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
       - uses: aws-actions/configure-aws-credentials@v1
