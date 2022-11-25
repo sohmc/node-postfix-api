@@ -57,11 +57,14 @@ jobs:
       - name: zip up the folder
         run: npm run zip
 
+      - name: ls
+        run: ls -lRF
+
       - name: Upload Zip File for Downstream Use
         uses: actions/upload-artifact@v3
         with:
           name: function.zip
-          path: function.zip
+          path: src/function.zip
           retention-days: 7
 
 
