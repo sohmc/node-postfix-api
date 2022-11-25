@@ -113,7 +113,7 @@ jobs:
       - name: Create or Update Lambda
         id: createLambda
         continue-on-error: true
-        run: bash -ex .ci/deploy-lambda.bash
+        run: bash -ex ../.ci/deploy-lambda.bash
       
       - name: Get Lambda Status
         run: |
@@ -121,6 +121,6 @@ jobs:
             --function-name ${LAMBDA_FUNCTION_NAME}
 
       - name: Update Lambda function Metadata
-        run: bash -ex .ci/deploy-lambda.bash update-metadata
+        run: bash -ex ../.ci/deploy-lambda.bash update-metadata
         env:
           LAMBDA_ENV_VARS: POSTFIX_DYNAMODB_TABLE=${{ secrets.POSTFIX_DYNAMODB_TABLE }}
