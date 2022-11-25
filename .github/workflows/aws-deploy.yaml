@@ -99,6 +99,7 @@ jobs:
         id: download-artifact
         with:
           name: function.zip
+          path: ${{ github.workspace }}/src
       
       - name: List ZIP contents
         run: unzip -l ${{ steps.download-artifact.outputs.download-path }}/function.zip
