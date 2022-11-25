@@ -58,7 +58,7 @@ jobs:
         run: npm run zip
 
       - name: ls
-        run: ls -lRF
+        run: ls -lRF ~/
 
       - name: Upload Zip File for Downstream Use
         uses: actions/upload-artifact@v3
@@ -66,6 +66,7 @@ jobs:
           name: function.zip
           path: function.zip
           retention-days: 7
+          if-no-files-found: error
 
 
 # ----------------------------- #
