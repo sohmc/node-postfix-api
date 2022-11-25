@@ -96,11 +96,12 @@ jobs:
 
       - name: Download a single artifact
         uses: actions/download-artifact@v3
+        id: download-artifact
         with:
           name: function.zip
       
       - name: List ZIP contents
-        run: unzip -l function.zip
+        run: unzip -l ${{ steps.download.outputs.download-artifact }}/function.zip
 
       # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
       - uses: aws-actions/configure-aws-credentials@v1
