@@ -26,7 +26,16 @@ module.exports = {
     return returnData;
   },
   async aliasQuery(placeholderObject) {
-    console.log('common.js:aliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+    console.log('common.js:aliasQuery -- placeholderObject: ' + JSON.stringify(placeholderObject));
+
+    const allowedFilters = {
+      'uuid': 'uuid',
+      'full_address': 'full_address',
+      'destination': 'destination',
+      'active': 'active',
+      'ignore': 'ignore_alias',
+    };
+
     const params = {
       'TableName': 'mailAliasesImport-9fbda3b75639',
       'KeyConditionExpression': '',
@@ -34,12 +43,43 @@ module.exports = {
       'ExpressionAttributeValues': {},
     };
 
-    if (Object.prototype.hasOwnProperty.call(placeholderObject, 'uuid')) {
-      params.IndexName = 'uuid-index';
-      params.KeyConditionExpression = '#kn0 = :kn0';
-      params.ExpressionAttributeNames['#kn0'] = 'uuid';
-      params.ExpressionAttributeValues[':kn0'] = placeholderObject.uuid;
+    const FilterExpressionArray = [];
+    for (let index = 0; index < Object.keys(allowedFilters).length; index++) {
+      const parameter = Object.keys(allowedFilters)[index];
+      const placeholderName = 'kn' + index;
+
+      console.log('checking placeholder for filter ' + parameter);
+      if (Object.prototype.hasOwnProperty.call(placeholderObject, parameter)) {
+        params.ExpressionAttributeNames[`#${placeholderName}`] = allowedFilters[parameter];
+        params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[parameter];
+
+        switch (parameter) {
+        case 'uuid':
+          params.IndexName = 'uuid-index';
+          params.KeyConditionExpression = `#${placeholderName} = :${placeholderName}`;
+          break;
+
+        case 'full_address':
+          params.IndexName = 'application-uuid-index';
+
+          // Set key value for the index
+          params.KeyConditionExpression = '#zz0 = :zz0';
+          params.ExpressionAttributeNames['#zz0'] = 'application';
+          params.ExpressionAttributeValues[':zz0'] = 'postfix';
+
+          // Do a contains operation on full_address
+          FilterExpressionArray.push(`contains(#${placeholderName}, :${placeholderName})`);
+          break;
+
+        default:
+          FilterExpressionArray.push(`#${placeholderName} = :${placeholderName}`);
+          break;
+        }
+      }
     }
+
+    // If there are any filter expressions, join them here
+    if (FilterExpressionArray.length > 0) params.FilterExpression = FilterExpressionArray.join(' AND ');
 
     console.log('ddbDocClient parameters: ' + JSON.stringify(params));
     const data = await ddbDocClient.send(new QueryCommand(params));
