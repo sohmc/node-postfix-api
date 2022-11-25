@@ -76,7 +76,7 @@ function createFunctionUrl {
     --function-name ${LAMBDA_FUNCTION_NAME} \
     --statement-id "FunctionURLAllowPublicAccess" \
     --action "lambda:InvokeFunctionUrl" \
-    --function-url-auth-type "NONE" \
+    --function-url-auth-type "AWS_IAM" \
     --principal "*"
 
   echo "Requesting a Function Url"
