@@ -64,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: function.zip
-          path: ${{ github.workspace }}/function.zip
+          path: ${{ github.workspace }}/src/function.zip
           retention-days: 7
           if-no-files-found: error
 
