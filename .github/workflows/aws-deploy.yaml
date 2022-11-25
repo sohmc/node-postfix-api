@@ -55,7 +55,7 @@ jobs:
         run: npm i --only=prod
 
       - name: zip up the folder
-        run: npm run deploy
+        run: npm run zip
 
       - name: Upload Zip File for Downstream Use
         uses: actions/upload-artifact@v3
