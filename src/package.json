@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "predeploy": "rm function.zip ; zip -r function.zip ./*",
-    "deploy": "bash ../.ci/deploy-lambda.bash",
-    "deploy-ses": "npm run predeploy && bash ../.ci/deploy-lambda.bash update ../.ci/ses.env",
+    "zip": "rm function.zip ; zip -r function.zip ./*",
+    "deploy-lambda": "bash -xe ../.ci/deploy-lambda.bash",
+    "deploy-ses": "npm run predeploy && bash -xe ../.ci/deploy-lambda.bash update ../.ci/ses.env",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

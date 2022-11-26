@@ -58,6 +58,7 @@ function createFunction {
     --memory-size ${LAMBDA_MEMORY_SIZE} \
     --architectures ${LAMBDA_ARCHITECTURE} \
     --handler index.handler \
+    ${LAMBDA_VPC} \
     --zip-file fileb://function.zip
 }
 
@@ -76,7 +77,7 @@ function createFunctionUrl {
     --function-name ${LAMBDA_FUNCTION_NAME} \
     --statement-id "FunctionURLAllowPublicAccess" \
     --action "lambda:InvokeFunctionUrl" \
-    --function-url-auth-type "NONE" \
+    --function-url-auth-type "AWS_IAM" \
     --principal "*"
 
   echo "Requesting a Function Url"
@@ -134,6 +135,7 @@ function updateFunctionMetadata {
     --role ${LAMBDA_EXECUTION_ROLE} \
     --timeout ${LAMBDA_TIMEOUT} \
     --memory-size ${LAMBDA_MEMORY_SIZE} \
+    ${LAMBDA_VPC} \
     --environment Variables={${LAMBDA_ENV_VARS}}
 }
 

@@ -1,0 +1,57 @@
+name: Node Build and Deploy
+on:
+  push:
+    branches-ignore:
+      - 'main'
+
+
+
+defaults:
+  run:
+    shell: bash
+    working-directory: 'src/'
+
+
+jobs:
+  npm-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16]
+
+    name: Node ${{ matrix.node-version }} test
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v3
+        with:
+          cache-dependency-path: '**/package-lock.json'
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: npm list
+
+      - name: Run npm install
+        run: npm i --only=prod
+
+
+# ----------------------------- #
+
+  aws-deploy-dev:
+    if: startsWith(github.ref_name, 'dev-')
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: development
+
+  aws-deploy-qa-prod:
+    if: startsWith(github.ref_name, 'qa-')
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: production
