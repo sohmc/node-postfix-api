@@ -46,6 +46,18 @@ else
   echo "LAMBDA_RUNTIME set to ${LAMBDA_RUNTIME}"
 fi
 
+# Attach VPC and Security Groups
+LAMBDA_VPC=''
+if [[ ! -z ${LAMBDA_SUBNETS+x} ]]; then
+  LAMBDA_VPC="SubnetIds=${LAMBDA_SUBNETS}"
+fi
+if [[ ! -z ${LAMBDA_SGS+x} ]]; then
+  LAMBDA_VPC="${LAMBDA_VPC},SecurityGroupIds=${LAMBDA_SGS}"
+fi
+if [[ ! -z ${LAMBDA_VPC+x} ]]; then
+  LAMBDA_VPC="--vpc-config ${LAMBDA_VPC}"
+fi
+
 
 function createFunction {
   echo "CREATING Lambda Function"
@@ -115,18 +127,6 @@ function updateFunctionMetadata {
   fi
 
   LAMBDA_ENV_VARS=${LAMBDA_ENV_VARS},SHA=${GIT_SHA},BUILD_ID=${BUILD_ID}
-
-  # Attach VPC and Security Groups
-  LAMBDA_VPC=''
-  if [[ ! -z ${LAMBDA_SUBNETS+x} ]]; then
-    LAMBDA_VPC="SubnetIds=${LAMBDA_SUBNETS}"
-  fi
-  if [[ ! -z ${LAMBDA_SGS+x} ]]; then
-    LAMBDA_VPC="${LAMBDA_VPC},SecurityGroupIds=${LAMBDAA_SGS}"
-  fi
-  if [[ ! -z ${LAMBDA_VPC} ]]; then
-    LAMBDA_VPC="--vpc-config ${LAMBDA_VPC}"
-  fi
 
   echo "Updating Lambda Function's Metadata..."
   aws lambda update-function-configuration \
