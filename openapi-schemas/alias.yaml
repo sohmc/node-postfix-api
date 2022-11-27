@@ -103,7 +103,13 @@ paths:
         required: true
       responses:
         '201':
-          $ref: '#/components/responses/AliasObject'
+          description: successful operation.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/responses/AliasObject'
         '405':
           $ref: '#/components/responses/InvalidInput'
   /alias/{uuid}:
@@ -126,7 +132,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: array
                 items:
                   $ref: '#/components/schemas/Alias'
         '400':
@@ -166,7 +172,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Alias'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alias'
         '405':
           description: Invalid input
   /alias/{uuid}/count:
@@ -190,7 +198,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Alias'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alias'
   /alias/{uuid}/activate:
     get:
       tags:
@@ -213,7 +223,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Alias'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alias'
   /alias/{uuid}/deactivate:
     get:
       tags:
@@ -235,7 +247,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Alias'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alias'
   /alias/{uuid}/ignore:
     get:
       tags:
@@ -259,7 +273,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Alias'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alias'
 components:
   schemas:
     ErrorResponse:
