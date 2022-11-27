@@ -255,8 +255,6 @@ async function incrementAliasCount(uuid) {
 
 // Needs to be updated
 async function updateAliasObject(uuid, requestBody, allowedProperties) {
-  const setClauses = [];
-  const placeholderArray = [];
   const placeholderObject = {};
 
   let returnObject = {
@@ -305,23 +303,6 @@ async function updateAliasObject(uuid, requestBody, allowedProperties) {
       returnObject.body.message = 'I would have just updated the alias.';
     }
   }
-
-  // uuid is always last
-  // placeholderObject.push(uuid);
-
-  // const queryResults = await commonFunctions.updateAliasItem(placeholderObject);
-
-  // const query = 'UPDATE `aliases` SET ' + setClauses.join(', ') + ' WHERE `uuid`=?';
-  // const queryResults = await commonFunctions.sendMysqlQuery(query, placeholderArray);
-
-  // if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
-  //   // if everything was successful, get the domain information from the database and return it as a response.
-  //   // domain is always last in the placeholderArray
-  //   const whereClauses = ['uuid=?'];
-  //   returnObject = await getAliasInformation(whereClauses, [uuid]);
-  // } else {
-  //   returnObject.body.message = 'error updating Alias in table';
-  // }
 
   return returnObject;
 }
