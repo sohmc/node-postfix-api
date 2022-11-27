@@ -1,7 +1,7 @@
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const client = new DynamoDB({ region: 'us-east-1' });
 
-const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 const ddbDocClient = DynamoDBDocument.from(client);
 
 module.exports = {
@@ -104,12 +104,12 @@ module.exports = {
         'alias_address': placeholderObject.alias_address,
         'destination': placeholderObject.destination,
         'full_address': `${placeholderObject.alias_address}@${placeholderObject.domain}`,
-        'uuid': uuidv4(),
-        'created': d,
+        'uuid': placeholderObject.uuid || uuidv4(),
+        'created': placeholderObject.created || d,
         'modified': d,
-        'active': true,
-        'ignore_alias': false,
-        'count': 1,
+        'active': placeholderObject.active || true,
+        'ignore_alias': placeholderObject.active || false,
+        'count': placeholderObject.count || 1,
       },
       'ExpressionAttributeNames': {
         '#kn1': 'domain',
@@ -126,21 +126,48 @@ module.exports = {
 
     return { 'affectedRows': 1, 'Item': params.Item };
   },
+  async updateAliasItem(placeholderObject) {
+    console.log('common.js:updateAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+
+    return true;
+  },
+  async deleteAliasItem(placeholderObject) {
+    console.log('common.js:deleteAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+
+    const params = {
+      'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+      'Key': {
+        'alias_address': placeholderObject.alias,
+        'domain': placeholderObject.domain,
+      },
+      'ExpressionAttributeNames': {
+        '#kn1': 'domain',
+        '#kn2': 'alias_address',
+      },
+      'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
+    };
+
+    console.log('ddbDocClient parameters: ' + JSON.stringify(params));
+    const data = await sendDocClientCommand(new DeleteCommand(params));
+    console.log('ddbDocClient Received data: ', JSON.stringify(data));
+
+    return data;
+  },
 };
 
 
 async function sendDocClientCommand(commandPackage) {
-  console.log('common.js:sendDocClientCommand');
+  console.log('common.js:sendDocClientCommand -- commandPackage: ' + JSON.stringify(commandPackage));
 
   try {
     const data = await ddbDocClient.send(commandPackage);
-    console.log('Received data: ', JSON.stringify(data));
+    console.log('sendDocClientCommand -- Received data: ', JSON.stringify(data));
 
-    let returnData = [];
-    if (Object.prototype.hasOwnProperty.call(data, 'Items')) returnData = data.Items;
+    if (Object.prototype.hasOwnProperty.call(data, 'Items')) return data.Items;
+    else return data;
 
-    return returnData;
   } catch (err) {
     console.error('DynamoDB returned an error: ' + err);
+    return err;
   }
 }

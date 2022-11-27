@@ -118,8 +118,8 @@ module.exports = {
       } else if (method === 'PATCH') {
         const allowedProperties = {
           'alias': 'alias_address',
-          'domain': 'domain_id',
-          'destination': 'destination_id',
+          'domain': 'domain',
+          'destination': 'destination',
           'active': 'active',
           'ignore': 'ignore_alias',
         };
@@ -231,6 +231,7 @@ async function insertAliasObject(placeholderObject) {
   return returnObject;
 }
 
+// Needs to be updated
 async function incrementAliasCount(uuid) {
   const returnObject = {
     statusCode: 405,
@@ -252,9 +253,11 @@ async function incrementAliasCount(uuid) {
   return returnObject;
 }
 
+// Needs to be updated
 async function updateAliasObject(uuid, requestBody, allowedProperties) {
   const setClauses = [];
   const placeholderArray = [];
+  const placeholderObject = {};
 
   let returnObject = {
     statusCode: 405,
@@ -268,62 +271,57 @@ async function updateAliasObject(uuid, requestBody, allowedProperties) {
   for (const property in allowedProperties) {
     console.log('checking for property ' + property);
     if (Object.prototype.hasOwnProperty.call(requestBody, property)) {
-      setClauses.push(allowedProperties[property] + '=?');
+      placeholderObject[allowedProperties[property]] = requestBody[property];
+    }
+  }
 
-      let query = '';
-      const primaryKeyWhereClause = [];
+  // Get current alias item by UUID
+  const currentAliasItem = await getAliasInformation({ 'uuid': uuid });
+  if (currentAliasItem.body.length === 1) {
+    const currentAliasInfo = currentAliasItem.body[0];
+    placeholderObject.uuid = currentAliasInfo.uuid;
 
-      switch (property) {
-      case 'domain':
-        // get domain id
-        query = 'SELECT `domain_id` as PRIMARY_KEY FROM `domain` WHERE `domain` = ?';
-        primaryKeyWhereClause.push(requestBody[property]);
-        true;
-        break;
-
-      case 'destination':
-        // get destination id
-        query = 'SELECT `destination_id` as PRIMARY_KEY FROM `destination` WHERE `destination` = ?';
-        primaryKeyWhereClause.push(requestBody[property]);
-        true;
-        break;
-
-      default:
-        true;
-        break;
+    // If trying to change alias_address or domain, then the entire record needs to be recreated.
+    if (Object.prototype.hasOwnProperty.call(placeholderObject, 'alias_address') || Object.prototype.hasOwnProperty.call(placeholderObject, 'domain')) {
+      for (const aliasProperty in currentAliasInfo) {
+        // if the property isn't set in the placeholderObject, set it with the current value.
+        if (!Object.prototype.hasOwnProperty.call(placeholderObject, aliasProperty)) placeholderObject[aliasProperty] = currentAliasInfo[aliasProperty];
       }
 
-      // If there is a query set, then find the primary key and add that to our placeholders
-      if (query.length > 0) {
-        console.log('Checking for primary key');
-        const queryResults = await commonFunctions.sendMysqlQuery(query, primaryKeyWhereClause);
+      console.log('Current placeholderObject: ' + JSON.stringify(placeholderObject));
 
-        if ((queryResults.length > 0) && Object.prototype.hasOwnProperty.call(queryResults[0], 'PRIMARY_KEY')) {
-          placeholderArray.push(queryResults[0].PRIMARY_KEY);
-        } else {
-          console.log('primary key check failed: ' + JSON.stringify(queryResults));
-          returnObject.body.message = 'Unable to determine primary key for ' + property + ': ' + requestBody[property];
-        }
-      } else {
-        placeholderArray.push(requestBody[property]);
+      // Delete Alias First
+      const deleteItemResults = await commonFunctions.deleteAliasItem(currentAliasInfo);
+      console.log('deleteItem returned: ' + JSON.stringify(deleteItemResults));
+      if (Object.prototype.hasOwnProperty.call(deleteItemResults, '$fault')) {
+        returnObject.body.message = 'Alias needed to be deleted, but the operation failed.';
+        return returnObject;
       }
+
+      // Now create the Item
+      returnObject = await insertAliasObject(placeholderObject);
+    } else {
+      // Update the alias per normal
+      returnObject.body.message = 'I would have just updated the alias.';
     }
   }
 
   // uuid is always last
-  placeholderArray.push(uuid);
+  // placeholderObject.push(uuid);
 
-  const query = 'UPDATE `aliases` SET ' + setClauses.join(', ') + ' WHERE `uuid`=?';
-  const queryResults = await commonFunctions.sendMysqlQuery(query, placeholderArray);
+  // const queryResults = await commonFunctions.updateAliasItem(placeholderObject);
 
-  if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
-    // if everything was successful, get the domain information from the database and return it as a response.
-    // domain is always last in the placeholderArray
-    const whereClauses = ['uuid=?'];
-    returnObject = await getAliasInformation(whereClauses, [uuid]);
-  } else {
-    returnObject.body.message = 'error updating Alias in table';
-  }
+  // const query = 'UPDATE `aliases` SET ' + setClauses.join(', ') + ' WHERE `uuid`=?';
+  // const queryResults = await commonFunctions.sendMysqlQuery(query, placeholderArray);
+
+  // if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+  //   // if everything was successful, get the domain information from the database and return it as a response.
+  //   // domain is always last in the placeholderArray
+  //   const whereClauses = ['uuid=?'];
+  //   returnObject = await getAliasInformation(whereClauses, [uuid]);
+  // } else {
+  //   returnObject.body.message = 'error updating Alias in table';
+  // }
 
   return returnObject;
 }
