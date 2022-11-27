@@ -94,16 +94,16 @@ module.exports = {
     console.log('common.js:putAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
 
     const { v4: uuidv4 } = require('uuid');
-    const d = Date.now() / 1000;
+    const d = Math.floor(Date.now() / 1000);
 
     const params = {
       'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
       'Item': {
         'application': 'postfix',
-        'domain': 'someDomain',
-        'alias_address': 'someAlias',
-        'destination': 'someDestination',
-        'full_address': '',
+        'domain': placeholderObject.domain,
+        'alias_address': placeholderObject.alias_address,
+        'destination': placeholderObject.destination,
+        'full_address': `${placeholderObject.alias_address}@${placeholderObject.domain}`,
         'uuid': uuidv4(),
         'created': d,
         'modified': d,
@@ -111,17 +111,20 @@ module.exports = {
         'ignore_alias': false,
         'count': 1,
       },
-      'ConditionExpression': 'attribute_not_exists(domain) AND attribute_not_exists(alias_address)',
+      'ExpressionAttributeNames': {
+        '#kn1': 'domain',
+        '#kn2': 'alias_address',
+      },
+      'ConditionExpression': 'attribute_not_exists(#kn1) AND attribute_not_exists(#kn2)',
     };
 
     console.log('ddbDocClient parameters: ' + JSON.stringify(params));
     const data = await sendDocClientCommand(new PutCommand(params));
     console.log('Received data: ', JSON.stringify(data));
 
-    let returnData = [];
-    if (Object.prototype.hasOwnProperty.call(data, 'Items')) returnData = data.Items;
+    if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
 
-    return returnData;
+    return { 'affectedRows': 1, 'Item': params.Item };
   },
 };
 

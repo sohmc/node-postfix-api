@@ -107,7 +107,11 @@ module.exports = {
           // return error message with property that is missing
           lambdaResponseObject.body.message = 'missing required property: ' + requiredProperties[requiredProperties.findIndex(property => Object.prototype.hasOwnProperty.call(requestBody, property))];
         } else {
-          const aliasObject = [requestBody.alias, requestBody.domain, requestBody.destination];
+          const aliasObject = {
+            'alias_address': requestBody.alias,
+            'domain': requestBody.domain,
+            'destination': requestBody.destination,
+          };
 
           lambdaResponseObject = await insertAliasObject(aliasObject);
         }
@@ -200,7 +204,7 @@ function createAliasObject(mysqlRowObject) {
   };
 }
 
-async function insertAliasObject(placeholderArray) {
+async function insertAliasObject(placeholderObject) {
   let returnObject = {
     statusCode: 405,
     body: {
@@ -210,15 +214,15 @@ async function insertAliasObject(placeholderArray) {
     },
   };
 
-  const query = 'CALL create_alias(?, ?, ?)';
-
-  // INSERT row into database
-  const queryResults = await commonFunctions.sendMysqlQuery(query, placeholderArray);
+  // PUT row into database
+  const queryResults = await commonFunctions.putAliasItem(placeholderObject);
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
-    const whereClauses = ['full_address=?', 'destination=?'];
-    const getAliasPlaceholders = [placeholderArray[0] + '@' + placeholderArray[1], placeholderArray[2]];
-    returnObject = await getAliasInformation(whereClauses, getAliasPlaceholders);
+    const getAliasPlaceholdersObject = {
+      'alias_address': placeholderObject.alias_address,
+      'domain': placeholderObject.domain,
+    };
+    returnObject = await getAliasInformation(getAliasPlaceholdersObject);
     returnObject.statusCode = 201;
   } else {
     returnObject.body.message = 'error running stored procedure create_alias.';
