@@ -17,8 +17,9 @@ exports.handler = (lambdaEvent, lambdaContext, callback) => {
 
     console.log('Destination: ' + mailRecord.destination);
 
-    for (const email of mailRecord.destination) {
-      console.log('email: ' + email);
+    for (const destinationRecord of mailRecord.destination) {
+      const email = removeSubAddressExtension(destinationRecord);
+      console.log('destination: ' + destinationRecord + ' -- email: ' + email);
 
       // X-Postfix-Check-2 means that the first rule has processed and completed with STOP_RULE (i.e. The alias exists)
       //    That means that we need to check if the alias is set to ignore.
@@ -56,6 +57,33 @@ exports.handler = (lambdaEvent, lambdaContext, callback) => {
   });
 };
 
+function removeSubAddressExtension(emailAddress) {
+  console.log('ses.js:removeSubAddressExtension -- emailAddress: ' + emailAddress);
+  const allowedSeparators = ['+', '--', '#', '='];
+  let alias_address = '';
+  let domain = '';
+
+  const emailParts = emailAddress.split('@', 2);
+  if (emailParts.length == 2) {
+    alias_address = emailParts[0];
+    domain = emailParts[1];
+  }
+
+  if (emailParts.length >= 1) alias_address = emailParts[0];
+
+  // If separator was not found, then return the original email address
+  if (allowedSeparators.findIndex((i) => alias_address.indexOf(i) > -1) === -1) return emailAddress;
+  else console.log('ses.js:removeSubAddressExtension -- separator found');
+
+  // Build the address with only the localPart by removing everything to the right of each separator
+  let newLocalPart = alias_address;
+  allowedSeparators.forEach((separator) => {
+    newLocalPart = newLocalPart.split(separator)[0];
+  });
+
+  console.log('ses.js:removeSubAddressExtension -- newLocalPart: ' + newLocalPart);
+  return `${newLocalPart}@${domain}`;
+}
 
 async function isActiveEmail(emailAddress) {
   const apiResponse = await aliasApi.execute('GET', [], { 'alias': emailAddress });
