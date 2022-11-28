@@ -16,14 +16,12 @@ module.exports = {
     };
 
     console.log('ddbDocClient parameters: ' + JSON.stringify(params));
-    const data = await ddbDocClient.send(new GetCommand(params));
-    console.log('Received data: ', JSON.stringify(data));
+    const data = await sendDocClientCommand(new GetCommand(params));
 
-    const returnData = [];
-    if (Object.prototype.hasOwnProperty.call(data, 'Item')) returnData.push(data.Item);
+    if (!Array.isArray(data)) return [];
 
-    console.log('returning: ' + JSON.stringify(returnData));
-    return returnData;
+    console.log('returning: ' + JSON.stringify(data));
+    return data;
   },
   async aliasQuery(placeholderObject) {
     console.log('common.js:aliasQuery -- placeholderObject: ' + JSON.stringify(placeholderObject));
@@ -164,6 +162,7 @@ async function sendDocClientCommand(commandPackage) {
     console.log('sendDocClientCommand -- Received data: ', JSON.stringify(data));
 
     if (Object.prototype.hasOwnProperty.call(data, 'Items')) return data.Items;
+    else if (Object.prototype.hasOwnProperty.call(data, 'Item')) return [ data.Item ];
     else return data;
 
   } catch (err) {
