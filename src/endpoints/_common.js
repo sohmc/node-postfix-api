@@ -1,7 +1,7 @@
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const client = new DynamoDB({ region: 'us-east-1' });
 
-const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const ddbDocClient = DynamoDBDocument.from(client);
 
 module.exports = {
@@ -48,7 +48,7 @@ module.exports = {
       const parameter = Object.keys(allowedFilters)[index];
       const placeholderName = 'kn' + index;
 
-      console.log('checking placeholder for filter ' + parameter);
+      console.log('common.js:aliasQuery -- checking placeholder for filter ' + parameter);
       if (Object.prototype.hasOwnProperty.call(placeholderObject, parameter)) {
         params.ExpressionAttributeNames[`#${placeholderName}`] = allowedFilters[parameter];
         params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[parameter];
@@ -98,10 +98,12 @@ module.exports = {
 
     const params = {
       'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+      'Key': {
+        'alias_address': placeholderObject.alias_address,
+        'domain': placeholderObject.domain,
+      },
       'Item': {
         'application': 'postfix',
-        'domain': placeholderObject.domain,
-        'alias_address': placeholderObject.alias_address,
         'destination': placeholderObject.destination,
         'full_address': `${placeholderObject.alias_address}@${placeholderObject.domain}`,
         'uuid': placeholderObject.uuid || uuidv4(),
@@ -115,12 +117,12 @@ module.exports = {
         '#kn1': 'domain',
         '#kn2': 'alias_address',
       },
-      'ConditionExpression': 'attribute_not_exists(#kn1) AND attribute_not_exists(#kn2)',
+      'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
     };
 
-    console.log('ddbDocClient parameters: ' + JSON.stringify(params));
+    console.log('common.js:putAliasItem -- ddbDocClient parameters: ' + JSON.stringify(params));
     const data = await sendDocClientCommand(new PutCommand(params));
-    console.log('Received data: ', JSON.stringify(data));
+    console.log('common.js:putAliasItem -- Received data: ', JSON.stringify(data));
 
     if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
 
@@ -129,8 +131,48 @@ module.exports = {
   async updateAliasItem(placeholderObject) {
     console.log('common.js:updateAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
 
-    // TODO
-    return true;
+    const d = Math.floor(Date.now() / 1000);
+
+    const params = {
+      'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+      'Key': {
+        'alias_address': placeholderObject.alias_address,
+        'domain': placeholderObject.domain,
+      },
+      'ExpressionAttributeNames': {
+        '#kn1': 'domain',
+        '#kn2': 'alias_address',
+      },
+      'ExpressionAttributeValues': {},
+      'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
+    };
+
+    // Add modified to the update
+    placeholderObject.modified = d;
+
+    const setArray = [];
+    for (let index = 0; index < Object.keys(placeholderObject).length; index++) {
+      const property = Object.keys(placeholderObject)[index];
+      const placeholderName = 'pt' + index;
+
+      // skip keys since they are already declared
+      if ((property == 'domain') || (property == 'alias_address')) continue;
+      console.log('common.js:updateAliasItem -- adding property ' + property + '=' + placeholderObject[property]);
+
+      params.ExpressionAttributeNames[`#${placeholderName}`] = property;
+      params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[property];
+      setArray.push(`#${placeholderName} = :${placeholderName}`);
+    }
+
+    // Create UpdateExpression
+    params.UpdateExpression = 'SET ' + setArray.join(', ');
+    console.log('common.js:updateAliasItem -- ddbDocClient parameters: ' + JSON.stringify(params));
+    const data = await sendDocClientCommand(new UpdateCommand(params));
+    console.log('common.js:updateAliasItem -- Received data: ', JSON.stringify(data));
+
+    if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
+
+    return { 'affectedRows': 1, 'Item': placeholderObject };
   },
   async deleteAliasItem(placeholderObject) {
     console.log('common.js:deleteAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));

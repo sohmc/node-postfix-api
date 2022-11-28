@@ -225,7 +225,7 @@ async function insertAliasObject(placeholderObject) {
     returnObject = await getAliasInformation(getAliasPlaceholdersObject);
     returnObject.statusCode = 201;
   } else {
-    returnObject.body.message = 'error running stored procedure create_alias.';
+    returnObject.body.message = 'Alias could not be added.';
   }
 
   return returnObject;
@@ -299,8 +299,20 @@ async function updateAliasObject(uuid, requestBody, allowedProperties) {
       // Now create the Item
       returnObject = await insertAliasObject(placeholderObject);
     } else {
-      // Update the alias per normal
-      returnObject.body.message = 'I would have just updated the alias.';
+      console.log('updating alias per normal UpdateItem command');
+      placeholderObject.alias_address = currentAliasInfo.alias;
+      placeholderObject.domain = currentAliasInfo.domain;
+      const updateItemResults = await commonFunctions.updateAliasItem(placeholderObject);
+
+      if (Object.prototype.hasOwnProperty.call(updateItemResults, 'affectedRows') && (updateItemResults.affectedRows === 1)) {
+        // if everything was successful, get the domain information from the database and return it as a response.
+        const getAliasPlaceholdersObject = {
+          'alias_address': placeholderObject.alias_address,
+          'domain': placeholderObject.domain,
+        };
+        returnObject = await getAliasInformation(getAliasPlaceholdersObject);
+        returnObject.statusCode = 201;
+      }
     }
   }
 
