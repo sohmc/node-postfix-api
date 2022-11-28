@@ -18,6 +18,8 @@ module.exports = {
     console.log('ddbDocClient parameters: ' + JSON.stringify(params));
     const data = await sendDocClientCommand(new GetCommand(params));
 
+    // If an array wasn't returned, there was an error.  sendDocClientCommand will output the error
+    // so return nothing here.
     if (!Array.isArray(data)) return [];
 
     console.log('returning: ' + JSON.stringify(data));
@@ -80,13 +82,13 @@ module.exports = {
     if (FilterExpressionArray.length > 0) params.FilterExpression = FilterExpressionArray.join(' AND ');
 
     console.log('ddbDocClient parameters: ' + JSON.stringify(params));
-    const data = await ddbDocClient.send(new QueryCommand(params));
-    console.log('Received data: ', JSON.stringify(data));
+    const data = await sendDocClientCommand(new QueryCommand(params));
 
-    let returnData = [];
-    if (Object.prototype.hasOwnProperty.call(data, 'Items')) returnData = data.Items;
+    // If an array wasn't returned, there was an error.  sendDocClientCommand will output the error
+    // so return nothing here.
+    if (!Array.isArray(data)) return [];
 
-    return returnData;
+    return data;
   },
   async putAliasItem(placeholderObject) {
     console.log('common.js:putAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
@@ -127,6 +129,7 @@ module.exports = {
   async updateAliasItem(placeholderObject) {
     console.log('common.js:updateAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
 
+    // TODO
     return true;
   },
   async deleteAliasItem(placeholderObject) {
