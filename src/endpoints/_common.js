@@ -156,12 +156,25 @@ module.exports = {
       const placeholderName = 'pt' + index;
 
       // skip keys since they are already declared
-      if ((property == 'domain') || (property == 'alias_address')) continue;
-      console.log('common.js:updateAliasItem -- adding property ' + property + '=' + placeholderObject[property]);
+      switch (property) {
+      case 'domain':
+        continue;
 
+      case 'alias_address':
+        continue;
+
+      case 'count':
+        setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
+        break;
+
+      default:
+        setArray.push(`#${placeholderName} = :${placeholderName}`);
+        break;
+      }
+
+      console.log('common.js:updateAliasItem -- adding property ' + property + '=' + placeholderObject[property]);
       params.ExpressionAttributeNames[`#${placeholderName}`] = property;
       params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[property];
-      setArray.push(`#${placeholderName} = :${placeholderName}`);
     }
 
     // Create UpdateExpression

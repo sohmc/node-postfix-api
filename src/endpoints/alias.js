@@ -237,8 +237,19 @@ async function incrementAliasCount(uuid) {
     statusCode: 405,
   };
 
-  const query = 'UPDATE `aliases` SET count = count + 1 WHERE uuid = ?';
-  const queryResults = await commonFunctions.sendMysqlQuery(query, [uuid]);
+  // Get current alias item by UUID
+  const currentAliasItem = await getAliasInformation({ 'uuid': uuid });
+  // if the uuid doesn't retrieve an alias, return an error
+  if (currentAliasItem.body.length != 1) return returnObject;
+
+  const currentAliasInfo = currentAliasItem.body[0];
+  const placeholderObject = {
+    'alias_address': currentAliasInfo.alias,
+    'domain': currentAliasInfo.domain,
+    'count': 1,
+  };
+
+  const queryResults = await commonFunctions.updateAliasItem(placeholderObject);
 
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     returnObject.statusCode = 204;
