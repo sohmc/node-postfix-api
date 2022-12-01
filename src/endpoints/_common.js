@@ -104,6 +104,8 @@ module.exports = {
       },
       'Item': {
         'application': 'postfix',
+        'domain': placeholderObject.domain || 'foobar',
+        'alias_address': placeholderObject.alias_address,
         'destination': placeholderObject.destination,
         'full_address': `${placeholderObject.alias_address}@${placeholderObject.domain}`,
         'uuid': placeholderObject.uuid || uuidv4(),
@@ -117,7 +119,7 @@ module.exports = {
         '#kn1': 'domain',
         '#kn2': 'alias_address',
       },
-      'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
+      'ConditionExpression': 'attribute_not_exists(#kn1) AND attribute_not_exists(#kn2)',
     };
 
     console.log('common.js:putAliasItem -- ddbDocClient parameters: ' + JSON.stringify(params));

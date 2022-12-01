@@ -58,6 +58,11 @@ if [[ ! -z ${LAMBDA_VPC+x} ]]; then
   LAMBDA_VPC="--vpc-config ${LAMBDA_VPC}"
 fi
 
+# Lambda Handler
+if [[ -z ${LAMBDA_HANDLER+x} ]]; then
+  LAMBDA_HANDLER=index.handler
+fi
+
 
 function createFunction {
   echo "CREATING Lambda Function"
@@ -69,7 +74,7 @@ function createFunction {
     --timeout ${LAMBDA_TIMEOUT} \
     --memory-size ${LAMBDA_MEMORY_SIZE} \
     --architectures ${LAMBDA_ARCHITECTURE} \
-    --handler index.handler \
+    --handler ${LAMBDA_HANDLER} \
     ${LAMBDA_VPC} \
     --zip-file fileb://function.zip
 }
