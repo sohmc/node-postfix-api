@@ -5,6 +5,9 @@ on:
       environment-name:
         required: true
         type: string
+      lambda-handler:
+        required: false
+        type: string
 
 defaults:
   run:
@@ -16,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16]
+        node-version: [18]
     
     environment: ${{ inputs.environment-name }}
 
@@ -76,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16]
+        node-version: [18]
 
     environment: ${{ inputs.environment-name }}
 
@@ -84,6 +87,7 @@ jobs:
       LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}-${{ inputs.environment-name }}
       LAMBDA_EXECUTION_ROLE: ${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}
       LAMBDA_RUNTIME: nodejs${{ matrix.node-version }}.x
+      LAMBDA_HANDLER: ${{ inputs.lambda-handler }}
 
     permissions:
       id-token: write

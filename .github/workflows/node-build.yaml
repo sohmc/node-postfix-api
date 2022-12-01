@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16]
+        node-version: [18]
 
     name: Node ${{ matrix.node-version }} test
     steps:
@@ -48,6 +48,14 @@ jobs:
     secrets: inherit
     with: 
       environment-name: development
+
+  aws-deploy-ses-dev:
+    if: startsWith(github.ref_name, 'dev-ses')
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: development-ses
+      lambda-handler: ses.export
 
   aws-deploy-qa-prod:
     if: startsWith(github.ref_name, 'qa-')
