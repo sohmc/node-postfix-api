@@ -54,7 +54,7 @@ fi
 if [[ ! -z ${LAMBDA_SGS+x} ]]; then
   LAMBDA_VPC="${LAMBDA_VPC},SecurityGroupIds=${LAMBDA_SGS}"
 fi
-if [[ ! -z ${LAMBDA_VPC+x} ]]; then
+if [[ ${LAMBDA_VPC} ]]; then
   LAMBDA_VPC="--vpc-config ${LAMBDA_VPC}"
 fi
 
