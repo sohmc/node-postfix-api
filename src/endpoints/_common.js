@@ -112,8 +112,8 @@ module.exports = {
         'created': placeholderObject.created || d,
         'modified': d,
         'active': placeholderObject.active || true,
-        'ignore_alias': placeholderObject.active || false,
-        'count': placeholderObject.count || 1,
+        'ignore_alias': placeholderObject.ignore_alias || false,
+        'count': parseInt(placeholderObject.count) || 1,
       },
       'ExpressionAttributeNames': {
         '#kn1': 'domain',
