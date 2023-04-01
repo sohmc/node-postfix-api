@@ -2,7 +2,7 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.205.2/containers/javascript-node
 {
 	"name": "Node.js",
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:16-bullseye",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:0-18",
 	"features": {
 		"ghcr.io/devcontainers/features/aws-cli:1": {}
 	},
