@@ -6,7 +6,7 @@ const AWS_REGION = 'us-east-1';
 const ddbClient = new DynamoDBClient({ region: AWS_REGION });
 
 // Configuration
-const DYNAMODB_TABLE_NAME = 'mailAliases-20230226-b375';
+const DYNAMODB_TABLE_NAME = 'mailAliases-20230724';
 
 // Define the name of your CSV file
 const csvFileName = 'mail_aliases.csv';
@@ -28,16 +28,16 @@ fs.createReadStream(csvFileName)
         application: { S: data.application },
         identifier: { S: data.identifier },
         alias_address: { S: data.alias_address },
-        sub_domain: { S: data.tld_domain },
+        sub_domain: { S: data.sub_domain },
         full_address: { S: data.full_address },
         destination: { S: data.destination },
         created_datetime: { N: mysqlDatetimeToUnixTime(data.created).toString() },
         modified_datetime: { N: mysqlDatetimeToUnixTime(data.modified).toString() },
-        active: { 'BOOL': Boolean(data.active) },
+        active_alias: { 'BOOL': Boolean(data.active_alias) },
         ignore_alias: { 'BOOL': Boolean(data.ignore_alias) },
-        count_alias: { N: data.count_alias.toString() },
+        use_count: { N: data.use_count.toString() },
       },
-      ConditionExpression: 'attribute_not_exists("alias_address") AND attribute_not_exists("subdomain")',
+      ConditionExpression: 'attribute_not_exists(alias_address) AND attribute_not_exists(subdomain)',
     };
 
     console.log(JSON.stringify(params, null, 2));
