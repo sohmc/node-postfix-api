@@ -11,7 +11,7 @@ module.exports = {
       'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
       'Key': {
         'alias_address': placeholderObject.alias_address,
-        'domain': placeholderObject.domain,
+        'sub_domain': placeholderObject.domain,
       },
     };
 
@@ -100,7 +100,7 @@ module.exports = {
       'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
       'Key': {
         'alias_address': placeholderObject.alias_address,
-        'domain': placeholderObject.domain,
+        'sub_domain': placeholderObject.domain,
       },
       'Item': {
         'application': 'postfix',
@@ -111,7 +111,7 @@ module.exports = {
         'identifier': placeholderObject.uuid || uuidv4(),
         'created_datetime': placeholderObject.created || d,
         'modified_datetime': d,
-        'active': placeholderObject.active || true,
+        'active_alias': placeholderObject.active || true,
         'ignore_alias': placeholderObject.ignore_alias || false,
         'use_count': parseInt(placeholderObject.count) || 1,
       },

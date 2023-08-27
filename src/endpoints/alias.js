@@ -231,7 +231,6 @@ async function insertAliasObject(placeholderObject) {
   return returnObject;
 }
 
-// Needs to be updated
 async function incrementAliasCount(uuid) {
   const returnObject = {
     statusCode: 405,
