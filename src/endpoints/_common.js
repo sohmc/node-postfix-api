@@ -29,10 +29,10 @@ module.exports = {
     console.log('common.js:aliasQuery -- placeholderObject: ' + JSON.stringify(placeholderObject));
 
     const allowedFilters = {
-      'uuid': 'uuid',
+      'uuid': 'identifier',
       'full_address': 'full_address',
       'destination': 'destination',
-      'active': 'active',
+      'active': 'active_alias',
       'ignore': 'ignore_alias',
     };
 
@@ -55,12 +55,12 @@ module.exports = {
 
         switch (parameter) {
         case 'uuid':
-          params.IndexName = 'uuid-index';
+          params.IndexName = 'identifier-index';
           params.KeyConditionExpression = `#${placeholderName} = :${placeholderName}`;
           break;
 
         case 'full_address':
-          params.IndexName = 'application-uuid-index';
+          params.IndexName = 'application-identifier-index';
 
           // Set key value for the index
           params.KeyConditionExpression = '#zz0 = :zz0';
@@ -104,19 +104,19 @@ module.exports = {
       },
       'Item': {
         'application': 'postfix',
-        'domain': placeholderObject.domain || 'foobar',
+        'sub_domain': placeholderObject.domain || 'foobar',
         'alias_address': placeholderObject.alias_address,
         'destination': placeholderObject.destination,
         'full_address': `${placeholderObject.alias_address}@${placeholderObject.domain}`,
-        'uuid': placeholderObject.uuid || uuidv4(),
-        'created': placeholderObject.created || d,
-        'modified': d,
+        'identifier': placeholderObject.uuid || uuidv4(),
+        'created_datetime': placeholderObject.created || d,
+        'modified_datetime': d,
         'active': placeholderObject.active || true,
         'ignore_alias': placeholderObject.ignore_alias || false,
-        'count': parseInt(placeholderObject.count) || 1,
+        'use_count': parseInt(placeholderObject.count) || 1,
       },
       'ExpressionAttributeNames': {
-        '#kn1': 'domain',
+        '#kn1': 'sub_domain',
         '#kn2': 'alias_address',
       },
       'ConditionExpression': 'attribute_not_exists(#kn1) AND attribute_not_exists(#kn2)',
@@ -139,18 +139,18 @@ module.exports = {
       'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
       'Key': {
         'alias_address': placeholderObject.alias_address,
-        'domain': placeholderObject.domain,
+        'sub_domain': placeholderObject.domain,
       },
       'ExpressionAttributeNames': {
-        '#kn1': 'domain',
+        '#kn1': 'sub_domain',
         '#kn2': 'alias_address',
       },
       'ExpressionAttributeValues': {},
       'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
     };
 
-    // Add modified to the update
-    placeholderObject.modified = d;
+    // Add modified_datetime to the update
+    placeholderObject.modified_datetime = d;
 
     const setArray = [];
     for (let index = 0; index < Object.keys(placeholderObject).length; index++) {
@@ -165,7 +165,7 @@ module.exports = {
       case 'alias_address':
         continue;
 
-      case 'count':
+      case 'use_count':
         setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
         break;
 
@@ -196,10 +196,10 @@ module.exports = {
       'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
       'Key': {
         'alias_address': placeholderObject.alias,
-        'domain': placeholderObject.domain,
+        'sub_domain': placeholderObject.domain,
       },
       'ExpressionAttributeNames': {
-        '#kn1': 'domain',
+        '#kn1': 'sub_domain',
         '#kn2': 'alias_address',
       },
       'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',

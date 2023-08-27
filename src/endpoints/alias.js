@@ -192,15 +192,15 @@ async function getAliasInformation(placeholderObject) {
 function createAliasObject(mysqlRowObject) {
   return {
     'alias': mysqlRowObject.alias_address,
-    'domain': mysqlRowObject.domain,
+    'domain': mysqlRowObject.sub_domain,
     'fullEmailAddress': mysqlRowObject.full_address,
     'destination': mysqlRowObject.destination,
-    'active': mysqlRowObject.active,
+    'active': mysqlRowObject.active_alias,
     'ignore': mysqlRowObject.ignore_alias,
-    'uuid': mysqlRowObject.uuid,
-    'count': mysqlRowObject.count,
-    'created': mysqlRowObject.created,
-    'modified': mysqlRowObject.modified,
+    'uuid': mysqlRowObject.identifier,
+    'count': mysqlRowObject.use_count,
+    'created': mysqlRowObject.created_date,
+    'modified': mysqlRowObject.modified_date,
   };
 }
 
@@ -243,10 +243,11 @@ async function incrementAliasCount(uuid) {
   if (currentAliasItem.body.length != 1) return returnObject;
 
   const currentAliasInfo = currentAliasItem.body[0];
+  console.log('results: ' + JSON.stringify(currentAliasItem));
   const placeholderObject = {
     'alias_address': currentAliasInfo.alias,
     'domain': currentAliasInfo.domain,
-    'count': 1,
+    'use_count': 1,
   };
 
   const queryResults = await commonFunctions.updateAliasItem(placeholderObject);
