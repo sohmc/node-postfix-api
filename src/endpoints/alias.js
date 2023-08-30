@@ -174,7 +174,7 @@ async function getAliasInformation(placeholderObject) {
     aliasInformation = await commonFunctions.aliasQuery(placeholderObject);
   }
 
-  if ((aliasInformation.length >= 1) && Object.prototype.hasOwnProperty.call(aliasInformation[0], 'alias_address')) {
+  if ((aliasInformation.length >= 1) && (typeof aliasInformation[0] !== 'undefined') && Object.prototype.hasOwnProperty.call(aliasInformation[0], 'alias_address')) {
     const returnArray = [];
     aliasInformation.forEach(aliasRow => {
       const returnAliasObject = createAliasObject(aliasRow);

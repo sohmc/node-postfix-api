@@ -22,7 +22,7 @@ module.exports = {
     // so return nothing here.
     if (!Array.isArray(data)) return [];
 
-    console.log('returning: ' + JSON.stringify(data));
+    console.log('common.js:getItem -- returning: ' + JSON.stringify(data));
     return data;
   },
   async aliasQuery(placeholderObject) {
