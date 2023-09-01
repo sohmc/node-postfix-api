@@ -86,18 +86,23 @@ function removeSubAddressExtension(emailAddress) {
 }
 
 async function isActiveEmail(emailAddress) {
+  console.log('ses.js:isActiveEmail -- ' + JSON.stringify(emailAddress));
   const apiResponse = await aliasApi.execute('GET', [], { 'alias': emailAddress });
   const apiResponseBody = JSON.parse(apiResponse.body);
+  console.log('ses.js:isActiveEmail -- ' + JSON.stringify(emailAddress) + ' :: ' + JSON.stringify(apiResponseBody));
 
-  if (apiResponseBody.length == 0) return false;
+  // Response Code 405 = Alias does not Exist
+  if (Object.prototype.hasOwnProperty.call(apiResponseBody, 'code') && apiResponseBody.code === 405) return false;
   else if (apiResponseBody[0].active) return true;
 
   return false;
 }
 
 async function isIgnoreAlias(emailAddress) {
+  console.log('ses.js:isIgnoreAlias -- ' + JSON.stringify(emailAddress));
   const apiResponse = await aliasApi.execute('GET', [], { 'alias': emailAddress });
   const apiResponseBody = JSON.parse(apiResponse.body);
+  console.log('ses.js:isIgnoreAlias -- ' + JSON.stringify(emailAddress) + ' :: ' + JSON.stringify(apiResponseBody));
 
   if (apiResponseBody.length == 0) return false;
   else if (apiResponseBody[0].ignore) return true;
