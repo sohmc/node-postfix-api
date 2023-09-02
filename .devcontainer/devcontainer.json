@@ -33,6 +33,7 @@
 
 	// Set environment variables within the container
 	"remoteEnv": {
-		"AWS_PROFILE": "vs-node-postfix-api"
+		"AWS_PROFILE": "vs-node-postfix-api",
+		"AWS_REGION": "us-east-1"
 	}
 }
