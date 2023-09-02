@@ -11,17 +11,6 @@
 		"type=bind,source=${localEnv:HOME}/.aws,destination=/mnt/localAws,readonly=true"
 	],
 
-	// Set *default* container specific settings.json values on container create.
-	"settings": {},
-
-	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": [
-		"dbaeumer.vscode-eslint",
-		"streetsidesoftware.code-spell-checker",
-		"42Crunch.vscode-openapi",
-		"redhat.vscode-yaml"
-	],
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
@@ -35,5 +24,20 @@
 	"remoteEnv": {
 		"AWS_PROFILE": "vs-node-postfix-api",
 		"AWS_REGION": "us-east-1"
+	},
+
+	"customizations": {
+		"vscode": {
+			// Set *default* container specific settings.json values on container create.
+			"settings": {},
+
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"dbaeumer.vscode-eslint",
+				"streetsidesoftware.code-spell-checker",
+				"42Crunch.vscode-openapi",
+				"redhat.vscode-yaml"
+			]
+		}
 	}
 }
