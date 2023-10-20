@@ -11,17 +11,17 @@ MAILDROP="/usr/bin/maildrop"
 
 # for each object in the bucket...
 for F in `aws s3 ls "s3://${BUCKET}/" | awk '{print $4;}'`; do
-    if [ "${F}" == "AMAZON_SES_SETUP_NOTIFICATION" ]; then
-        continue # ignore this object SES creates during set-up
-    fi
+  if [ "${F}" == "AMAZON_SES_SETUP_NOTIFICATION" ]; then
+    continue # ignore this object SES creates during set-up
+  fi
 
-    # download the object and feed it on stdin to MAILDROP
-    if ! aws s3 cp "s3://${BUCKET}/${F}" - | ${MAILDROP}; then
-        echo "S3->MAILDROP fetch of ${F} failed with status $?"
-    else
-        echo "$0 successfully fetched ${F}" >> "${HOME}/.fetchlog"
+  # download the object and feed it on stdin to MAILDROP
+  if ! aws s3 cp "s3://${BUCKET}/${F}" - | ${MAILDROP}; then
+    echo "S3->MAILDROP fetch of ${F} failed with status $?"
+  else
+    echo "$0 successfully fetched ${F}" >> "${HOME}/.fetchlog"
 
-        # success - delete the S3 object
-        aws s3 rm "s3://${BUCKET}/${F}" --quiet
-    fi
+    # success - delete the S3 object
+    aws s3 rm "s3://${BUCKET}/${F}" --quiet
+  fi
 done
