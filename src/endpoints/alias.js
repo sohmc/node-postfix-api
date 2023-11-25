@@ -29,7 +29,7 @@ module.exports = {
           'alias': 'full_address',
           'q': 'full_address',
           'destination': 'destination',
-          'active': 'active',
+          'active': 'active_alias',
           'ignore': 'ignore_alias',
         };
 
