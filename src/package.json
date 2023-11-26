@@ -12,10 +12,10 @@
   "license": "AGPL-3.0",
   "description": "",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.267.0",
-    "@aws-sdk/lib-dynamodb": "^3.267.0",
-    "csv": "^6.2.7",
-    "csv-parse": "^5.3.5",
-    "uuid": "^9.0.0"
+    "@aws-sdk/client-dynamodb": "^3.454.0",
+    "@aws-sdk/lib-dynamodb": "^3.454.0",
+    "csv": "^6.3.5",
+    "csv-parse": "^5.5.2",
+    "uuid": "^9.0.1"
   }
 }
