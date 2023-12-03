@@ -1,3 +1,5 @@
+const commonFunctions = require('./_common.js');
+
 module.exports = {
   'metadata': {
     'endpoint': 'domain',
@@ -20,15 +22,22 @@ module.exports = {
       },
     };
 
+    const placeholderObject = {
+      'domain': 'tacomail-config',
+      'alias_address': 'sub_domains',
+    };
+
     try {
       if (method === 'GET') {
         // If there are path parameters, then do a query for the domain provided
         if (pathParameters.length > 0) {
-          const whereClause = 'domain=?';
-          lambdaResponseObject = await getDomainInformation(whereClause, [pathParameters[0]]);
+          lambdaResponseObject = await getDomainInformation(placeholderObject, { 'sub_domain': pathParameters[0] });
         } else if (Object.prototype.hasOwnProperty.call(queryParameters, 'q')) {
-          const whereClause = 'domain LIKE ?';
-          lambdaResponseObject = await getDomainInformation(whereClause, ['%' + queryParameters.q + '%']);
+          lambdaResponseObject = await getDomainInformation(placeholderObject, { 'q': queryParameters.q });
+        } else {
+          // If there are no path parameters and there is no query parameters
+          // then return all domains
+          lambdaResponseObject = await getDomainInformation(placeholderObject);
         }
       } else if (method === 'POST') {
         console.log('requestBody: ' + JSON.stringify(requestBody));
@@ -36,7 +45,7 @@ module.exports = {
           lambdaResponseObject.body.type = 'domain';
           lambdaResponseObject.body.message = 'domain property required';
         } else {
-          const placeholderArray = [ requestBody.domain, requestBody.description || '', requestBody.active || true ];
+          const placeholderArray = [requestBody.domain, requestBody.description || '', requestBody.active || true];
           lambdaResponseObject = await insertDomainObject(placeholderArray);
         }
       } else if (method === 'PATCH') {
@@ -75,8 +84,9 @@ module.exports = {
   },
 };
 
-async function getDomainInformation(whereClause, placeholderArray) {
-  console.log('getDomainInformation: ' + whereClause + ':' + placeholderArray);
+async function getDomainInformation(placeholderObject, searchParams = {}) {
+  console.log('getDomainInformation: ' + JSON.stringify(placeholderObject));
+
   const returnObject = {
     statusCode: 405,
     body: {
@@ -86,25 +96,35 @@ async function getDomainInformation(whereClause, placeholderArray) {
     },
   };
 
-  const query = 'SELECT * FROM domain WHERE ' + whereClause;
-  const domainInformation = await mysqlQuery(query, placeholderArray);
+  const domainItem = await commonFunctions.getItem(placeholderObject);
 
-  if ((domainInformation.length >= 1) && Object.prototype.hasOwnProperty.call(domainInformation[0], 'domain')) {
+  if ((domainItem.length == 1) && (typeof domainItem[0] !== 'undefined') && Object.prototype.hasOwnProperty.call(domainItem[0], 'configValues')) {
+    const domainConfigItem = domainItem[0];
+
     const returnArray = [];
-    domainInformation.forEach(domainRow => {
-      const returnDomainObject = createDomainObject(domainRow);
-      returnArray.push(returnDomainObject);
-    });
+    if (domainConfigItem.configValues instanceof Set) {
+      domainConfigItem.configValues.forEach(element => {
+        // If element has search parameter q or if sub_domain equals,
+        // or if no parameters, add it to the return array.
+        if ((Object.prototype.hasOwnProperty.call(searchParams, 'q') && (element.indexOf(searchParams.q) >= 0))
+          || ((Object.prototype.hasOwnProperty.call(searchParams, 'sub_domain') && (element == searchParams.sub_domain)))
+          || (Object.is(searchParams, {})))
+          returnArray.push(element);
+      });
 
-    returnObject.statusCode = 200;
-    returnObject.body = returnArray;
+      returnObject.statusCode = 200;
+      returnObject.body = returnArray;
+    } else {
+      returnObject.body.message = 'Domain configuration not set up';
+    }
   }
 
   return returnObject;
 }
 
+
 // Creates the domain object that aligns with the API declared schema
-function createDomainObject(mysqlRowObject) {
+function _createDomainObject(mysqlRowObject) {
   return {
     'domain': mysqlRowObject.domain,
     'description': mysqlRowObject.description,
@@ -182,8 +202,6 @@ async function updateDomainObject(domain, requestBody, allowedProperties) {
 }
 
 async function mysqlQuery(query, queryValues) {
-  const commonFunctions = require('./_common.js');
-
   const queryResults = await commonFunctions.sendMysqlQuery(query, queryValues);
 
   return queryResults;

@@ -219,7 +219,7 @@ async function sendDocClientCommand(commandPackage) {
 
   try {
     const data = await ddbDocClient.send(commandPackage);
-    console.log('sendDocClientCommand -- Received data: ', JSON.stringify(data));
+    console.log('sendDocClientCommand -- Received data: ' + JSON.stringify(data));
 
     if (Object.prototype.hasOwnProperty.call(data, 'Items')) return data.Items;
     else if (Object.prototype.hasOwnProperty.call(data, 'Item')) return [ data.Item ];
