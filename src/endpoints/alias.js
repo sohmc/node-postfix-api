@@ -189,18 +189,18 @@ async function getAliasInformation(placeholderObject) {
 }
 
 // Creates the domain object that aligns with the API declared schema
-function createAliasObject(mysqlRowObject) {
+function createAliasObject(aliasObject) {
   return {
-    'alias': mysqlRowObject.alias_address,
-    'domain': mysqlRowObject.sub_domain,
-    'fullEmailAddress': mysqlRowObject.full_address,
-    'destination': mysqlRowObject.destination,
-    'active': mysqlRowObject.active_alias,
-    'ignore': mysqlRowObject.ignore_alias,
-    'uuid': mysqlRowObject.identifier,
-    'count': mysqlRowObject.use_count,
-    'created': mysqlRowObject.created_date,
-    'modified': mysqlRowObject.modified_date,
+    'alias': aliasObject.alias_address,
+    'domain': aliasObject.sub_domain,
+    'fullEmailAddress': aliasObject.full_address,
+    'destination': aliasObject.destination,
+    'active': aliasObject.active_alias,
+    'ignore': aliasObject.ignore_alias,
+    'uuid': aliasObject.identifier,
+    'count': aliasObject.use_count,
+    'created': aliasObject.created_date,
+    'modified': aliasObject.modified_date,
   };
 }
 
