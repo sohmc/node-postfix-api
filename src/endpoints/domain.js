@@ -50,12 +50,20 @@ module.exports = {
           placeholderObject.active_domain = requestBody.active || true;
 
           const currentConfig = await getDomainInformation(placeholderObject);
+          console.log('domain.js:CurrentConfig - ' + JSON.stringify(currentConfig));
+          const newSubDomainExists = currentConfig.body.findIndex(element => element.subdomain == placeholderObject.newSubDomain);
 
           // If there are domains configured, UPDATE an item
           if (currentConfig.body.length > 0) {
-            lambdaResponseObject = await updateDomainObject(placeholderObject);
+            if (newSubDomainExists == -1) {
+              lambdaResponseObject = await addDomainObject(placeholderObject);
+            } else {
+              lambdaResponseObject.statusCode = 409;
+              lambdaResponseObject.body.code = 409;
+              lambdaResponseObject.body.message = 'domain exists';
+            }
           } else {
-            lambdaResponseObject = await insertDomainObject(placeholderObject);
+            lambdaResponseObject = await addDomainConfigObject(placeholderObject);
           }
         }
       } else if (method === 'PATCH') {
@@ -112,15 +120,15 @@ async function getDomainInformation(placeholderObject, searchParams = {}) {
     const domainConfigItem = domainItem[0];
 
     const returnArray = [];
-    if (domainConfigItem.configValues instanceof Array) {
+    if (Object.prototype.hasOwnProperty.call(domainConfigItem, 'configValues') && domainConfigItem.configValues.length > 0) {
       domainConfigItem.configValues.forEach(element => {
         // If element has search parameter q or if sub_domain equals,
         // or if no parameters, add it to the return array.
         if ((Object.prototype.hasOwnProperty.call(searchParams, 'q') && (element.subdomain.indexOf(searchParams.q) >= 0))
           || ((Object.prototype.hasOwnProperty.call(searchParams, 'sub_domain') && (element.subdomain == searchParams.sub_domain)))
-          || (Object.is(searchParams, {})))
-          // eslint-disable-next-line curly
+          || (Object.keys(searchParams).length == 0)) {
           returnArray.push(element);
+        }
       });
 
       returnObject.statusCode = 200;
@@ -128,13 +136,15 @@ async function getDomainInformation(placeholderObject, searchParams = {}) {
     } else {
       returnObject.body.message = 'Domain configuration not set up';
     }
+  } else {
+    returnObject.body.message = 'Domain configuration not set up';
   }
 
   return returnObject;
 }
 
 
-async function insertDomainObject(placeholderObject) {
+async function addDomainConfigObject(placeholderObject) {
   let returnObject = {
     statusCode: 405,
     body: {
@@ -144,23 +154,21 @@ async function insertDomainObject(placeholderObject) {
     },
   };
 
-  // PUT row into config
-  const queryResults = await commonFunctions.putDomainItem(placeholderObject);
+  // Update the config ITEM
+  const queryResults = await commonFunctions.addDomainConfigItem(placeholderObject);
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
     returnObject = await getDomainInformation(placeholderObject, { 'sub_domain': placeholderObject.newSubDomain });
     returnObject.statusCode = 201;
   } else {
     returnObject.body.type = 'domain';
-    returnObject.body.message = 'error inserting domain into table';
+    returnObject.body.message = 'error inserting domain in configuration';
   }
 
   return returnObject;
 }
 
-async function updateDomainObject(domain, requestBody, allowedProperties) {
-  const setClauses = [];
-  const placeholderArray = [];
+async function addDomainObject(placeholderObject) {
   let returnObject = {
     statusCode: 405,
     body: {
@@ -170,36 +178,16 @@ async function updateDomainObject(domain, requestBody, allowedProperties) {
     },
   };
 
-  allowedProperties.forEach(column => {
-    console.log('checking for column ' + column);
-    if (Object.prototype.hasOwnProperty.call(requestBody, column)) {
-      setClauses.push(column + '=?');
-      placeholderArray.push(requestBody[column]);
-    }
-  });
-
-  // domain is always last
-  placeholderArray.push(domain);
-
-  const query = 'UPDATE domain SET ' + setClauses.join(', ') + ' WHERE domain=?';
-  console.log('query: ' + query);
-  const queryResults = await mysqlQuery(query, placeholderArray);
+  const queryResults = await commonFunctions.addDomainConfigItem(placeholderObject);
 
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
-    // domain is always last in the placeholderArray
-    const whereClause = 'domain=?';
-    returnObject = await getDomainInformation(whereClause, [placeholderArray.pop()]);
+    returnObject = await getDomainInformation(placeholderObject, { 'sub_domain': placeholderObject.newSubDomain });
+    returnObject.statusCode = 201;
   } else {
     returnObject.body.type = 'domain';
-    returnObject.body.message = 'error updating domain in table';
+    returnObject.body.message = 'error updating domain in configuration';
   }
 
   return returnObject;
-}
-
-async function mysqlQuery(query, queryValues) {
-  const queryResults = await commonFunctions.sendMysqlQuery(query, queryValues);
-
-  return queryResults;
 }

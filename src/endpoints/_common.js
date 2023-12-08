@@ -251,6 +251,45 @@ module.exports = {
 
     return { 'affectedRows': 1, 'Item': params.Item };
   },
+  async addDomainConfigItem(placeholderObject) {
+    console.log('common.js:addDomainConfigItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+
+    const d = Math.floor(Date.now() / 1000);
+
+    const domainInfo = new Map([
+      ['subdomain', placeholderObject.newSubDomain],
+      ['description', placeholderObject.description || ''],
+      ['active', placeholderObject.active_domain || true],
+      ['created_datetime', d],
+      ['modified_datetime', d],
+    ]);
+
+    // These parameters do NOT check to see if the new subdomain
+    // already exists.  That is done in domains.js
+    const params = {
+      'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+      'Key': {
+        'alias_address': placeholderObject.alias_address,
+        'sub_domain': placeholderObject.domain,
+      },
+      'UpdateExpression': 'SET #ri = list_append(#ri, :ri)',
+      'ExpressionAttributeValues': {
+        ':ri': [domainInfo],
+      },
+      'ExpressionAttributeNames': {
+        '#ri': 'configValues',
+      },
+    };
+
+    console.log('common.js:addDomainConfigItem -- ddbDocClient parameters: ' + JSON.stringify(params));
+    const data = await sendDocClientCommand(new UpdateCommand(params));
+    console.log('common.js:addDomainConfigItem -- Received data: ', JSON.stringify(data));
+
+    // Return an empty array if we get anything other than 200
+    if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
+
+    return { 'affectedRows': 1, 'Item': params.Item };
+  },
 };
 
 
