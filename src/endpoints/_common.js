@@ -290,6 +290,58 @@ module.exports = {
 
     return { 'affectedRows': 1, 'Item': params.Item };
   },
+  async updateDomainConfigItem(placeholderObject, subDomainPosition) {
+    console.log('common.js:updateDomainConfigItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+    const d = Math.floor(Date.now() / 1000);
+
+    const params = {
+      'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+      'Key': {
+        'alias_address': placeholderObject.alias_address,
+        'sub_domain': placeholderObject.domain,
+      },
+      // You can't use an array (e.g. configValues[1]) here.  It must be explicitly defined
+      'ExpressionAttributeNames': {
+        '#kn1': 'configValues',
+      },
+      'ExpressionAttributeValues': {
+        ':yf1': placeholderObject.subdomain,
+        ':yf2': d,
+      },
+      'ConditionExpression': `#kn1[${subDomainPosition}].subdomain = :yf1`,
+    };
+
+    const setArray = [`#kn1[${subDomainPosition}].modified_datetime = :yf2`];
+    for (let index = 0; index < Object.keys(placeholderObject).length; index++) {
+      const property = Object.keys(placeholderObject)[index];
+      const placeholderName = 'pt' + index;
+
+      // skip keys since they are already declared
+      switch (property) {
+      case 'domain':
+      case 'alias_address':
+        continue;
+
+      default:
+        setArray.push(`#kn1[${subDomainPosition}].#${placeholderName} = :${placeholderName}`);
+        break;
+      }
+
+      console.log('common.js:updateDomainConfigItem -- adding property ' + property + '=' + placeholderObject[property]);
+      params.ExpressionAttributeNames[`#${placeholderName}`] = property;
+      params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[property];
+    }
+
+    // Create UpdateExpression
+    params.UpdateExpression = 'SET ' + setArray.join(', ');
+    console.log('common.js:updateDomainConfigItem -- ddbDocClient parameters: ' + JSON.stringify(params));
+    const data = await sendDocClientCommand(new UpdateCommand(params));
+    console.log('common.js:updateDomainConfigItem -- Received data: ', JSON.stringify(data));
+
+    if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
+
+    return { 'affectedRows': 1, 'Item': placeholderObject };
+  },
 };
 
 

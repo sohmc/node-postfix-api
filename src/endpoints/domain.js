@@ -40,6 +40,8 @@ module.exports = {
           lambdaResponseObject = await getDomainInformation(placeholderObject);
         }
       } else if (method === 'POST') {
+        // Adding a domain requires a post body.  Any query parameters
+        // are silently ignored.
         console.log('requestBody: ' + JSON.stringify(requestBody));
         if (!Object.prototype.hasOwnProperty.call(requestBody, 'domain') || requestBody.domain.length == 0) {
           lambdaResponseObject.body.type = 'domain';
@@ -50,7 +52,7 @@ module.exports = {
           placeholderObject.active_domain = requestBody.active || true;
 
           const currentConfig = await getDomainInformation(placeholderObject);
-          console.log('domain.js:CurrentConfig - ' + JSON.stringify(currentConfig));
+          console.log('domain.js:POST-CurrentConfig - ' + JSON.stringify(currentConfig));
           const newSubDomainExists = currentConfig.body.findIndex(element => element.subdomain == placeholderObject.newSubDomain);
 
           // If there are domains configured, UPDATE an item
@@ -73,8 +75,25 @@ module.exports = {
 
         // If there is a path parameter and there is at least one accepted property in the request body, then continue
         if ((pathParameters.length > 0) && (allowedProperties.findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
+          placeholderObject.subdomain = pathParameters[0].trim();
+          const currentConfig = await getDomainInformation(placeholderObject);
+          console.log('domain.js:POST-CurrentConfig - ' + JSON.stringify(currentConfig));
+          const subDomainPosition = currentConfig.body.findIndex(element => element.subdomain == placeholderObject.subdomain);
 
-          lambdaResponseObject = await updateDomainObject(pathParameters[0], requestBody, allowedProperties);
+          if (subDomainPosition == -1) {
+            lambdaResponseObject.statusCode = 405;
+            lambdaResponseObject.body.code = 405;
+            lambdaResponseObject.body.message = 'subdomain does not exist';
+          } else {
+            for (const key in requestBody) {
+              if (Object.hasOwnProperty.call(requestBody, key)) {
+                const value = requestBody[key];
+                if (allowedProperties.indexOf(key) >= 0) placeholderObject[key] = value;
+              }
+            }
+
+            lambdaResponseObject = await updateDomainConfigObject(placeholderObject, subDomainPosition);
+          }
         } else {
           lambdaResponseObject.statusCode = 405;
           lambdaResponseObject.body.code = 405;
@@ -183,6 +202,30 @@ async function addDomainObject(placeholderObject) {
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
     returnObject = await getDomainInformation(placeholderObject, { 'sub_domain': placeholderObject.newSubDomain });
+    returnObject.statusCode = 201;
+  } else {
+    returnObject.body.type = 'domain';
+    returnObject.body.message = 'error updating domain in configuration';
+  }
+
+  return returnObject;
+}
+
+async function updateDomainConfigObject(placeholderObject, subDomainPosition) {
+  let returnObject = {
+    statusCode: 405,
+    body: {
+      'code': 405,
+      'type': 'domain',
+      'message': 'Domain could not be updated',
+    },
+  };
+
+  // Update the config ITEM
+  const queryResults = await commonFunctions.updateDomainConfigItem(placeholderObject, subDomainPosition);
+  if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+    // if everything was successful, get the domain information from the database and return it as a response.
+    returnObject = await getDomainInformation(placeholderObject, { 'sub_domain': placeholderObject.subdomain });
     returnObject.statusCode = 201;
   } else {
     returnObject.body.type = 'domain';
