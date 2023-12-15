@@ -188,7 +188,7 @@ async function getAliasInformation(placeholderObject) {
   return returnObject;
 }
 
-// Creates the domain object that aligns with the API declared schema
+// Creates the alias object that aligns with the API declared schema
 function createAliasObject(aliasObject) {
   return {
     'alias': aliasObject.alias_address,
@@ -199,8 +199,8 @@ function createAliasObject(aliasObject) {
     'ignore': aliasObject.ignore_alias,
     'uuid': aliasObject.identifier,
     'count': aliasObject.use_count,
-    'created': aliasObject.created_date,
-    'modified': aliasObject.modified_date,
+    'created': aliasObject.created_datetime,
+    'modified': aliasObject.modified_datetime,
   };
 }
 
