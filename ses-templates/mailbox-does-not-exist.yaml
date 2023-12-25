@@ -1,0 +1,31 @@
+TemplateName: tacomail-550-mailbox-does-not-exist
+SubjectPart: Failed Address Delivery ${TO} (550)
+TextPart: |
+  The following address failed delivery:
+
+    ${TO}
+  
+  It may be because the destination address does not exist, 
+  the user quota is full, or resolves in a way that could not
+  be parsed.
+
+  Please reach out to the recipient using alternative means.
+
+  SMTP Reply Code: 550
+  SMTP status code: 5.2.0
+HtmlPart: |
+  <p>The following address failed delivery:</span></p>
+
+  <pre>
+  ${TO}
+  </pre>
+
+  <p>It may be because the destination address does not exist, the user quota is full, or resolves in a way that could not be parsed.</p>
+
+  <p>Please reach out to the recipient using alternative means.</p>
+
+  <p>&nbsp;</p>
+
+  <p>SMTP Reply Code: <pre>550</pre></p>
+
+  <p>SMTP status code: <pre>5.2.0</pre></p>
