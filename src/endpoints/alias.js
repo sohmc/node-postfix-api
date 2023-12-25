@@ -1,4 +1,5 @@
 const commonFunctions = require('./_common.js');
+const domainFunctions = require('./domain.js');
 
 module.exports = {
   'metadata': {
@@ -106,6 +107,9 @@ module.exports = {
         if (requiredProperties.findIndex(property => Object.prototype.hasOwnProperty.call(requestBody, property)) === -1) {
           // return error message with property that is missing
           lambdaResponseObject.body.message = 'missing required property: ' + requiredProperties[requiredProperties.findIndex(property => Object.prototype.hasOwnProperty.call(requestBody, property))];
+        } else if (await checkDomainConfig(requestBody.domain) == -1) {
+          // return error message stating domain is invalid
+          lambdaResponseObject.body.message = 'domain is either inactive or invalid';
         } else {
           const aliasObject = {
             'alias_address': requestBody.alias,
@@ -330,4 +334,13 @@ async function updateAliasObject(uuid, requestBody, allowedProperties) {
 
 
   return returnObject;
+}
+
+async function checkDomainConfig(domainToCheck) {
+  const domainListResponse = await domainFunctions.execute('GET', [], {});
+  const domainList = JSON.parse(domainListResponse.body);
+
+  console.log(JSON.stringify(domainList));
+
+  return domainList.findIndex(domain => ((domain.subdomain == domainToCheck) && (domain.active)));
 }
