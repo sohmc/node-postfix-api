@@ -18,8 +18,10 @@ exports.handler = async (lambdaEvent, lambdaContext) => {
 
     // Get rid of the empty first element that exists after the split.
     const pathParameters = requestContext.http.path.split('/').slice(1);
+    const method = requestContext.http.method;
     const endpoint = pathParameters.shift();
-    console.log(`Requested Endpoint: ${endpoint}`);
+
+    console.log(`Requested Endpoint: ${method} ${endpoint}`);
     const endpointFunction = loadEndpoint(endpoint);
 
     const queryStringParameters = lambdaEvent.queryStringParameters || {};
@@ -35,9 +37,9 @@ exports.handler = async (lambdaEvent, lambdaContext) => {
   return lambdaResponseObject;
 };
 
-function loadEndpoint(targetEndpoint) {
-  const endpointModulesPath = path.join(__dirname + '/endpoints');
-  const commandFilename = targetEndpoint + '.js';
+function loadEndpoint(method, targetEndpoint) {
+  const endpointModulesPath = path.join(__dirname + '/newEndpoints/' + targetEndpoint);
+  const commandFilename = method + '.js';
   const endpointFiles = fs.readdirSync(endpointModulesPath).filter(file => file.toLowerCase() === commandFilename.toLowerCase() && file != 'index.js');
 
   if (endpointFiles.length == 0) return {};
