@@ -36,7 +36,8 @@
 				"dbaeumer.vscode-eslint",
 				"streetsidesoftware.code-spell-checker",
 				"42Crunch.vscode-openapi",
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"github.vscode-github-actions"
 			]
 		}
 	}
