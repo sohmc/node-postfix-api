@@ -1,7 +1,7 @@
-const fs = require('node:fs');
-const path = require('node:path');
+import { readdirSync } from 'node:fs';
+import { join } from 'node:path';
 
-exports.handler = async (lambdaEvent, lambdaContext) => {
+export async function handler(lambdaEvent, lambdaContext) {
   console.log('handler event: ' + JSON.stringify(lambdaEvent));
   console.log('handler context: ' + JSON.stringify(lambdaContext));
 
@@ -22,33 +22,36 @@ exports.handler = async (lambdaEvent, lambdaContext) => {
     const endpoint = pathParameters.shift();
 
     console.log(`Requested Endpoint: ${method} ${endpoint}`);
-    const endpointFunction = loadEndpoint(endpoint);
+    const endpointFunction = loadEndpoint(method, endpoint);
 
     const queryStringParameters = lambdaEvent.queryStringParameters || {};
     const requestBody = JSON.parse(lambdaEvent.body || '{}');
 
-    if (Object.prototype.hasOwnProperty.call(endpointFunction, 'metadata') &&
-      (endpointFunction.metadata.supportedMethods.indexOf(requestContext.http.method) >= 0)) {
-      lambdaResponseObject = await endpointFunction.execute(requestContext.http.method, pathParameters, queryStringParameters, requestBody, lambdaEvent, lambdaContext);
+    if (Object.prototype.hasOwnProperty.call(endpointFunction, 'execute')) {
+      lambdaResponseObject = await endpointFunction.execute(pathParameters, queryStringParameters, requestBody, lambdaEvent, lambdaContext);
+    } else {
+      lambdaResponseObject.statusCode = 400;
+      lambdaResponseObject.body = '{"message": "Bad Request"}';
     }
   }
 
 
+  console.log('lambdaResponseObject: ' + JSON.stringify(lambdaResponseObject));
   return lambdaResponseObject;
-};
+}
 
 function loadEndpoint(method, targetEndpoint) {
-  const endpointModulesPath = path.join(__dirname + '/newEndpoints/' + targetEndpoint);
+  const endpointModulesPath = join(__dirname + '/newEndpoints/' + targetEndpoint);
   const commandFilename = method + '.js';
-  const endpointFiles = fs.readdirSync(endpointModulesPath).filter(file => file.toLowerCase() === commandFilename.toLowerCase() && file != 'index.js');
+  const endpointFiles = readdirSync(endpointModulesPath).filter(file => file.toLowerCase() === commandFilename.toLowerCase() && file != 'index.js');
 
   if (endpointFiles.length == 0) return {};
 
-  const filePath = path.join(endpointModulesPath, endpointFiles[0]);
+  const filePath = join(endpointModulesPath, endpointFiles[0]);
   console.log('Loading: ' + filePath);
   const endpointModule = require(filePath);
 
-  console.log('Loaded: ' + endpointModule.metadata.endpoint + ': (TYPE: ' + endpointModule.metadata.supportedMethods + ') ' + endpointModule.metadata.description);
+  // console.log('Loaded: ' + endpointModule.metadata.endpoint + ': (TYPE: ' + endpointModule.metadata.supportedMethods + ') ' + endpointModule.metadata.description);
 
   return endpointModule;
 }

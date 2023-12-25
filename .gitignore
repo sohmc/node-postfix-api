@@ -6,4 +6,5 @@ instance-to-rds.sql
 migration_plan.md
 src/testing.js
 src/helper-scripts/
+.ci/jest-coverage/
 *.csv

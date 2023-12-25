@@ -12,6 +12,18 @@ const allowedParameters = {
 export async function execute(pathParameters = [], queryParameters = {}) {
   console.log(`(alias/GET) Received request with pathParameters ${JSON.stringify(pathParameters)} queryParameters ${JSON.stringify(queryParameters)}`);
 
+  let lambdaResponseObject = {
+    statusCode: 418,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: {
+      'code': 418,
+      'type': 'alias',
+      'message': '',
+    },
+  };
+
   // If there are path parameters, then do a query for the alias uuid provided
   if (pathParameters.length > 0) {
     const uuid = pathParameters[0];
@@ -84,6 +96,8 @@ export async function execute(pathParameters = [], queryParameters = {}) {
 
     lambdaResponseObject = await getAliasDetails(placeholderObject);
   }
+
+  return lambdaResponseObject;
 }
 
 async function getAliasDetails(placeholderObject) {
@@ -102,7 +116,10 @@ async function getAliasDetails(placeholderObject) {
   if (Object.prototype.hasOwnProperty.call(placeholderObject, 'alias_address')) {
     aliasInformation = await getItem(placeholderObject);
   } else {
-    return 'Not Refactored Yet';
+    returnObject.statusCode = 503;
+    returnObject.body = '{"message": "Not Refactored Yet"}';
+    console.log('uuid search Not Refactored Yet.')
+    return returnObject;
     // aliasInformation = await commonFunctions.aliasQuery(placeholderObject);
   }
 
