@@ -24,7 +24,7 @@ export async function handler(lambdaEvent, lambdaContext) {
     console.log(`Requested Endpoint: ${method} ${endpoint}`);
     const endpointFunction = loadEndpoint(method, endpoint);
 
-    const queryStringParameters = lambdaEvent.queryStringParameters || {};
+    const queryStringParameters = { ...lambdaEvent.queryStringParameters } || {};
     const requestBody = JSON.parse(lambdaEvent.body || '{}');
 
     if (Object.prototype.hasOwnProperty.call(endpointFunction, 'execute')) {
@@ -35,8 +35,6 @@ export async function handler(lambdaEvent, lambdaContext) {
     }
   }
 
-
-  console.log('lambdaResponseObject: ' + JSON.stringify(lambdaResponseObject));
   return lambdaResponseObject;
 }
 

@@ -18,6 +18,7 @@
 	"postCreateCommand": [
 		"ln -s /mnt/localAws ${HOME}/.aws",
 		"ssh-keygen -R 140.82.114.3",
+		"ssh-keygen -R 140.82.114.4",
 		"ssh-keygen -R github.com",
 		"ssh-keyscan github.com >> ${HOME}/.ssh/known_hosts"
 	],
