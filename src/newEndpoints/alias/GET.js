@@ -129,11 +129,6 @@ async function getAliasDetails(placeholderObject) {
     }
     aliasInformation = await getItem(params);
   } else {
-    // This branch is for queries and searches
-    // returnObject.statusCode = 503;
-    // returnObject.body = '{"message": "Not Refactored Yet"}';
-    // console.log('uuid search Not Refactored Yet.')
-    // return returnObject;
     aliasInformation = await aliasQuery(placeholderObject);
   }
 
