@@ -2,7 +2,7 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.205.2/containers/javascript-node
 {
 	"name": "Node.js",
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:0-18",
+	"image": "mcr.microsoft.com/devcontainers/javascript-node:18-bookworm",
 	"features": {
 		"ghcr.io/devcontainers/features/aws-cli:1": {}
 	},
@@ -17,12 +17,6 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": [
 		"ln -s /mnt/localAws ${HOME}/.aws",
-		"ssh-keygen -R 140.82.113.3",
-		"ssh-keygen -R 140.82.113.4",
-		"ssh-keygen -R 140.82.114.3",
-		"ssh-keygen -R 140.82.114.4",
-		"ssh-keygen -R github.com",
-		"ssh-keyscan github.com 140.82.113.3 140.82.113.4 140.82.114.3 140.82.114.4 >> ${HOME}/.ssh/known_hosts"
 	],
 
 	// Comment out connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
