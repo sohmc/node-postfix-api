@@ -3,7 +3,7 @@ require('dotenv').config();
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const client = new DynamoDB({ region: 'us-east-1' });
 
-const { DynamoDBDocument, GetCommand, _QueryCommand, PutCommand, _DeleteCommand, _UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, _DeleteCommand, _UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const ddbDocClient = DynamoDBDocument.from(client);
 
 
@@ -11,14 +11,12 @@ export async function getItem(placeholderObject) {
   console.log('utilities/getItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
   const params = {
     'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
-    'Key': {
-      'alias_address': placeholderObject.alias_address,
-      'sub_domain': placeholderObject.domain,
-    },
+    ...placeholderObject
   };
 
   console.log('ddbDocClient parameters: ' + JSON.stringify(params));
-  const data = await sendDocClientCommand(new GetCommand(params));
+
+  const data = await sendDocClientCommand((Object.prototype.hasOwnProperty.call(params, 'KeyConditionExpression') ? new QueryCommand(params) : new GetCommand(params)));
 
   // If an array wasn't returned, there was an error.  sendDocClientCommand will output the error
   // so return nothing here.

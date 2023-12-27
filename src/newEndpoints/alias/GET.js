@@ -52,10 +52,16 @@ export async function execute(pathParameters = [], queryParameters = {}) {
 
       // If a second path parameter is set, take that action first by updating the alias and then return the updated details
       if (Object.keys(updateAliasRequestBody).length > 0) {
-        return 'Not Refactored Yet';
+        returnObject.statusCode = 503;
+        returnObject.body = '{"message": "Not Refactored Yet"}';
+        console.log('Updating active/inactive not refactored')
+        return returnObject;
         // lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody, allowedParameters);
       } else if (pathParameters[1] === 'count') {
-        return 'Not Refactored Yet';
+        returnObject.statusCode = 503;
+        returnObject.body = '{"message": "Not Refactored Yet"}';
+        console.log('Updating count not refactored.')
+        return returnObject;
         // lambdaResponseObject = await incrementAliasCount(uuid);
       }
     } else {
@@ -113,14 +119,22 @@ async function getAliasDetails(placeholderObject) {
   };
 
   let aliasInformation = {};
+  // alias_address requires an exact key match
   if (Object.prototype.hasOwnProperty.call(placeholderObject, 'alias_address')) {
-    aliasInformation = await getItem(placeholderObject);
+    const params = {
+      'Key': {
+        'alias_address': placeholderObject.alias_address,
+        'sub_domain': placeholderObject.domain,
+      }
+    }
+    aliasInformation = await getItem(params);
   } else {
-    returnObject.statusCode = 503;
-    returnObject.body = '{"message": "Not Refactored Yet"}';
-    console.log('uuid search Not Refactored Yet.')
-    return returnObject;
-    // aliasInformation = await commonFunctions.aliasQuery(placeholderObject);
+    // This branch is for queries and searches
+    // returnObject.statusCode = 503;
+    // returnObject.body = '{"message": "Not Refactored Yet"}';
+    // console.log('uuid search Not Refactored Yet.')
+    // return returnObject;
+    aliasInformation = await aliasQuery(placeholderObject);
   }
 
   if ((aliasInformation.length >= 1) && (typeof aliasInformation[0] !== 'undefined') && Object.prototype.hasOwnProperty.call(aliasInformation[0], 'alias_address')) {
@@ -135,6 +149,66 @@ async function getAliasDetails(placeholderObject) {
   }
 
   return returnObject;
+}
+
+async function aliasQuery(placeholderObject) {
+  console.log('common.js:aliasQuery -- placeholderObject: ' + JSON.stringify(placeholderObject));
+
+  const allowedFilters = {
+    'uuid': 'identifier',
+    'full_address': 'full_address',
+    'destination': 'destination',
+    'active': 'active_alias',
+    'ignore': 'ignore_alias',
+  };
+
+  const params = {
+    'KeyConditionExpression': '',
+    'ExpressionAttributeNames': {},
+    'ExpressionAttributeValues': {},
+  };
+
+  const FilterExpressionArray = [];
+  for (let index = 0; index < Object.keys(allowedFilters).length; index++) {
+    const parameter = Object.keys(allowedFilters)[index];
+    const placeholderName = 'aliasGETsv' + index;
+
+    console.log('common.js:aliasQuery -- checking placeholder for filter ' + parameter);
+    if (Object.prototype.hasOwnProperty.call(placeholderObject, parameter)) {
+      params.ExpressionAttributeNames[`#${placeholderName}`] = allowedFilters[parameter];
+      params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[parameter];
+
+      switch (parameter) {
+      case 'uuid':
+        params.IndexName = 'identifier-index';
+        params.KeyConditionExpression = `#${placeholderName} = :${placeholderName}`;
+        break;
+
+      case 'full_address':
+        params.IndexName = 'application-identifier-index';
+
+        // Set key value for the index
+        params.KeyConditionExpression = '#zz0 = :zz0';
+        params.ExpressionAttributeNames['#zz0'] = 'application';
+        params.ExpressionAttributeValues[':zz0'] = 'postfix';
+
+        // Do a contains operation on full_address
+        FilterExpressionArray.push(`contains(#${placeholderName}, :${placeholderName})`);
+        break;
+
+      default:
+        FilterExpressionArray.push(`#${placeholderName} = :${placeholderName}`);
+        break;
+      }
+    }
+  }
+
+  // If there are any filter expressions, join them here
+  if (FilterExpressionArray.length > 0) params.FilterExpression = FilterExpressionArray.join(' AND ');
+
+  const data = await getItem(params);
+
+  return data;
 }
 
 // Creates the alias object that aligns with the API declared schema

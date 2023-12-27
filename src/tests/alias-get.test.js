@@ -15,6 +15,7 @@ test('Get Alias (peacelilly.02@capricadev.tk) by UUID (dbabb088-40ad-4bc0-8627-d
   console.log(JSON.stringify(result));
 
   expect(result.statusCode).toEqual(200);
+  expect(result.body[0].fullEmailAddress).toBe('peacelilly.02@capricadev.tk');
 });
 
 test('Get Alias (peacelilly.02@capricadev.tk) by alias query', async () => {
