@@ -52,11 +52,7 @@ export async function execute(pathParameters = [], queryParameters = {}) {
 
       // If a second path parameter is set, take that action first by updating the alias and then return the updated details
       if (Object.keys(updateAliasRequestBody).length > 0) {
-        // returnObject.statusCode = 503;
-        // returnObject.body = '{"message": "Not Refactored Yet"}';
-        // console.log('Updating active/inactive not refactored')
-        // return returnObject;
-        lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody, allowedParameters);
+        lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody);
       } else if (pathParameters[1] === 'count') {
         returnObject.statusCode = 503;
         returnObject.body = '{"message": "Not Refactored Yet"}';
