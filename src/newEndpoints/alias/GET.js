@@ -54,10 +54,6 @@ export async function execute(pathParameters = [], queryParameters = {}) {
       if (Object.keys(updateAliasRequestBody).length > 0) {
         lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody);
       } else if (pathParameters[1] === 'count') {
-        // returnObject.statusCode = 503;
-        // returnObject.body = '{"message": "Not Refactored Yet"}';
-        // console.log('Updating count not refactored.')
-        // return returnObject;
         lambdaResponseObject = await incrementAliasCount(uuid);
       }
     } else {
