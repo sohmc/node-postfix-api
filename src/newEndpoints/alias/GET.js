@@ -1,4 +1,4 @@
-import { getItem } from "../_utilities";
+import { getItem, updateItem } from "../_utilities";
 
 const allowedParameters = {
   'alias': 'full_address',
@@ -52,11 +52,11 @@ export async function execute(pathParameters = [], queryParameters = {}) {
 
       // If a second path parameter is set, take that action first by updating the alias and then return the updated details
       if (Object.keys(updateAliasRequestBody).length > 0) {
-        returnObject.statusCode = 503;
-        returnObject.body = '{"message": "Not Refactored Yet"}';
-        console.log('Updating active/inactive not refactored')
-        return returnObject;
-        // lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody, allowedParameters);
+        // returnObject.statusCode = 503;
+        // returnObject.body = '{"message": "Not Refactored Yet"}';
+        // console.log('Updating active/inactive not refactored')
+        // return returnObject;
+        lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody, allowedParameters);
       } else if (pathParameters[1] === 'count') {
         returnObject.statusCode = 503;
         returnObject.body = '{"message": "Not Refactored Yet"}';
@@ -226,7 +226,7 @@ async function updateAliasObject(uuid, requestBody) {
   }
 
   // Get current alias item by UUID
-  const currentAliasItem = await getAliasInformation({ 'uuid': uuid });
+  const currentAliasItem = await getAliasDetails({ 'uuid': uuid });
   // if the uuid doesn't retrieve an alias, return an error
   if (currentAliasItem.body.length != 1) return returnObject;
 
@@ -260,9 +260,9 @@ async function updateAliasObject(uuid, requestBody) {
     console.log('updating alias per normal UpdateItem command');
     placeholderObject.alias_address = currentAliasInfo.alias;
     placeholderObject.domain = currentAliasInfo.domain;
-    const updateItemResults = await commonFunctions.updateAliasItem(placeholderObject);
+    const updateItemResults = await updateItem(placeholderObject);
 
-    if (Object.prototype.hasOwnProperty.call(updateItemResults, 'affectedRows') && (updateItemResults.affectedRows === 1)) {
+    if (Object.prototype.hasOwnProperty.call(updateItemResults, 'affectedRows') && (updateItemResults.affectedRows == 1)) {
       // if everything was successful, get the domain information from the database and return it as a response.
       const getAliasPlaceholdersObject = {
         'alias_address': placeholderObject.alias_address,

@@ -3,7 +3,7 @@ require('dotenv').config();
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const client = new DynamoDB({ region: 'us-east-1' });
 
-const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, _DeleteCommand, _UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, _DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const ddbDocClient = DynamoDBDocument.from(client);
 
 
@@ -55,11 +55,12 @@ export async function putItem(placeholderObject) {
 }
 
 export async function updateItem(placeholderObject) {
-  console.log('common.js:updateAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+  console.log('utilities/updateItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
 
   const d = Math.floor(Date.now() / 1000);
 
   const params = {
+    'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
     'Key': {
       'alias_address': placeholderObject.alias_address,
       'sub_domain': placeholderObject.domain,
@@ -75,38 +76,15 @@ export async function updateItem(placeholderObject) {
   // Add modified_datetime to the update
   placeholderObject.modified_datetime = d;
 
-  const setArray = [];
-  for (let index = 0; index < Object.keys(placeholderObject).length; index++) {
-    const property = Object.keys(placeholderObject)[index];
-    const placeholderName = 'pt' + index;
-
-    // skip keys since they are already declared
-    switch (property) {
-    case 'domain':
-      continue;
-
-    case 'alias_address':
-      continue;
-
-    case 'use_count':
-      setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
-      break;
-
-    default:
-      setArray.push(`#${placeholderName} = :${placeholderName}`);
-      break;
-    }
-
-    console.log('common.js:updateAliasItem -- adding property ' + property + '=' + placeholderObject[property]);
-    params.ExpressionAttributeNames[`#${placeholderName}`] = property;
-    params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[property];
-  }
+  const expressionAttributes = buildExpressionAttributes(placeholderObject);
+  params.ExpressionAttributeNames  = { ...params.ExpressionAttributeNames, ...expressionAttributes.ExpressionAttributeNames };
+  params.ExpressionAttributeValues = { ...params.ExpressionAttributeValues, ...expressionAttributes.ExpressionAttributeValues };
 
   // Create UpdateExpression
-  params.UpdateExpression = 'SET ' + setArray.join(', ');
-  console.log('common.js:updateAliasItem -- ddbDocClient parameters: ' + JSON.stringify(params));
+  params.UpdateExpression = 'SET ' + expressionAttributes.setArray.join(', ');
+  console.log('utilities/updateItem -- ddbDocClient parameters: ' + JSON.stringify(params));
   const data = await sendDocClientCommand(new UpdateCommand(params));
-  console.log('common.js:updateAliasItem -- Received data: ', JSON.stringify(data));
+  console.log('utilities/updateItem -- Received data: ', JSON.stringify(data));
 
   if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
 
@@ -155,7 +133,10 @@ export function buildExpressionAttributes(attributesObject) {
       expressionsAttributes.ExpressionAttributeNames[`#${placeholderName}`] = property;
       expressionsAttributes.ExpressionAttributeValues[`:${placeholderName}`] = attributesObject[property];
 
-      expressionsAttributes.setArray.push(`#${placeholderName} = :${placeholderName}`);
+      if (property == 'use_count')
+        setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
+      else 
+        expressionsAttributes.setArray.push(`#${placeholderName} = :${placeholderName}`);
     }
 
     console.log('utilities/buildExpressionAttributes -- Key: ' + placeholderName + ' - adding property ' + property + '=' + attributesObject[property]);
