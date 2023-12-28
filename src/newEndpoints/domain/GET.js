@@ -1,3 +1,5 @@
+import { getItem, updateItem } from "../_utilities";
+
 export async function execute(pathParameters = [], queryParameters = {}) {
   console.log(`(domain/GET) Received request with pathParameters ${JSON.stringify(pathParameters)} queryParameters ${JSON.stringify(queryParameters)}`);
 
@@ -20,18 +22,28 @@ export async function execute(pathParameters = [], queryParameters = {}) {
 
   // If there are path parameters, then do a query for the domain provided
   if (pathParameters.length > 0) {
+    returnObject.statusCode = 503;
+    returnObject.body = '{"message": "Not Refactored Yet"}';
+    console.log('querying for a domain not refactored')
+    return returnObject;
     lambdaResponseObject = await getDomainInformation(placeholderObject, { 'sub_domain': pathParameters[0] });
   } else if (Object.prototype.hasOwnProperty.call(queryParameters, 'q')) {
+    returnObject.statusCode = 503;
+    returnObject.body = '{"message": "Not Refactored Yet"}';
+    console.log('searching for a domain not refactored')
+    return returnObject;
     lambdaResponseObject = await getDomainInformation(placeholderObject, { 'q': queryParameters.q });
   } else {
     // If there are no path parameters and there is no query parameters
     // then return all domains
-    lambdaResponseObject = await getDomainInformation(placeholderObject);
+    lambdaResponseObject = await getDomainConfig(placeholderObject);
   }
+
+  return lambdaResponseObject;
 }
 
-async function getDomainInformation(placeholderObject, searchParams = {}) {
-  console.log('getDomainInformation: ' + JSON.stringify(placeholderObject));
+async function getDomainConfig(placeholderObject, searchParams = {}) {
+  console.log('getDomainConfig: ' + JSON.stringify(placeholderObject));
 
   const returnObject = {
     statusCode: 405,
@@ -42,7 +54,14 @@ async function getDomainInformation(placeholderObject, searchParams = {}) {
     },
   };
 
-  const domainItem = await commonFunctions.getItem(placeholderObject);
+  const params = {
+    'Key': {
+      'alias_address': placeholderObject.alias_address,
+      'sub_domain': placeholderObject.domain,
+    }
+  }
+
+  const domainItem = await getItem(params);
 
   if ((domainItem.length == 1) && (typeof domainItem[0] !== 'undefined') && Object.prototype.hasOwnProperty.call(domainItem[0], 'configValues')) {
     const domainConfigItem = domainItem[0];
