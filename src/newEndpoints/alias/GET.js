@@ -54,11 +54,11 @@ export async function execute(pathParameters = [], queryParameters = {}) {
       if (Object.keys(updateAliasRequestBody).length > 0) {
         lambdaResponseObject = await updateAliasObject(uuid, updateAliasRequestBody);
       } else if (pathParameters[1] === 'count') {
-        returnObject.statusCode = 503;
-        returnObject.body = '{"message": "Not Refactored Yet"}';
-        console.log('Updating count not refactored.')
-        return returnObject;
-        // lambdaResponseObject = await incrementAliasCount(uuid);
+        // returnObject.statusCode = 503;
+        // returnObject.body = '{"message": "Not Refactored Yet"}';
+        // console.log('Updating count not refactored.')
+        // return returnObject;
+        lambdaResponseObject = await incrementAliasCount(uuid);
       }
     } else {
       // If the length of pathParameters is essentially not 2, the endpoint is
@@ -269,6 +269,39 @@ async function updateAliasObject(uuid, requestBody) {
     } else {
       returnObject.body.message = 'Could not update alias.';
     }
+  }
+
+  return returnObject;
+}
+
+async function incrementAliasCount(uuid) {
+  const returnObject = {
+    statusCode: 405,
+  };
+
+  // Get current alias item by UUID
+  const currentAliasItem = await getAliasDetails({ 'uuid': uuid });
+  // if the uuid doesn't retrieve an alias, return an error
+  if (currentAliasItem.body.length != 1) return returnObject;
+
+  const currentAliasInfo = currentAliasItem.body[0];
+  console.log('results: ' + JSON.stringify(currentAliasItem));
+  const placeholderObject = {
+    'alias_address': currentAliasInfo.alias,
+    'domain': currentAliasInfo.domain,
+    'use_count': 1,
+  };
+
+  const queryResults = await updateItem(placeholderObject);
+
+  if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
+    returnObject.statusCode = 204;
+  } else {
+    returnObject.body = {
+      'code': 405,
+      'type': 'alias',
+      'message': 'Could not increment alias',
+    };
   }
 
   return returnObject;

@@ -134,7 +134,7 @@ export function buildExpressionAttributes(attributesObject) {
       expressionsAttributes.ExpressionAttributeValues[`:${placeholderName}`] = attributesObject[property];
 
       if (property == 'use_count')
-        setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
+        expressionsAttributes.setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
       else 
         expressionsAttributes.setArray.push(`#${placeholderName} = :${placeholderName}`);
     }

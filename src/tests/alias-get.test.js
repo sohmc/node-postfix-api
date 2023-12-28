@@ -74,3 +74,19 @@ test('Activate peacelilly.02@capricadev.tk by alias UUID', async () => {
   expect(result.body[0].ignore).toBeFalsy();
   expect(result.body[0].active).toBeTruthy();
 });
+
+test('Increment count for peacelilly.02@capricadev.tk by alias UUID', async () => {
+  const lambdaEvent = {
+    'requestContext': {
+      'http': {
+        'method': 'GET',
+        'path': '/alias/dbabb088-40ad-4bc0-8627-d810e2d4f205/count',
+      },
+    },
+  };
+
+  const result = await handler(lambdaEvent, {});
+  console.log(JSON.stringify(result));
+
+  expect(result.statusCode).toEqual(204);
+});
