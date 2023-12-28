@@ -234,6 +234,11 @@ async function updateAliasObject(uuid, requestBody) {
 
   // If trying to change alias_address or domain, then the entire record needs to be recreated.
   if (Object.prototype.hasOwnProperty.call(placeholderObject, 'alias_address') || Object.prototype.hasOwnProperty.call(placeholderObject, 'domain')) {
+    returnObject.statusCode = 503;
+    returnObject.body = '{"message": "Not Refactored Yet"}';
+    console.log('Updating active/inactive not refactored')
+    return returnObject;
+
     for (const aliasProperty in currentAliasInfo) {
       // if the property isn't set in the placeholderObject, set it with the current value.
       if (!Object.prototype.hasOwnProperty.call(placeholderObject, aliasProperty)) placeholderObject[aliasProperty] = currentAliasInfo[aliasProperty];
@@ -263,7 +268,7 @@ async function updateAliasObject(uuid, requestBody) {
         'alias_address': placeholderObject.alias_address,
         'domain': placeholderObject.domain,
       };
-      returnObject = await getAliasInformation(getAliasPlaceholdersObject);
+      returnObject = await getAliasDetails(getAliasPlaceholdersObject);
       returnObject.statusCode = 201;
     } else {
       returnObject.body.message = 'Could not update alias.';
@@ -271,6 +276,66 @@ async function updateAliasObject(uuid, requestBody) {
   }
 
   return returnObject;
+}
+
+async function updateAliasItem(placeholderObject) {
+  console.log('common.js:updateAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+
+  const d = Math.floor(Date.now() / 1000);
+
+  const params = {
+    'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+    'Key': {
+      'alias_address': placeholderObject.alias_address,
+      'sub_domain': placeholderObject.domain,
+    },
+    'ExpressionAttributeNames': {
+      '#kn1': 'sub_domain',
+      '#kn2': 'alias_address',
+    },
+    'ExpressionAttributeValues': {},
+    'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
+  };
+
+  // Add modified_datetime to the update
+  placeholderObject.modified_datetime = d;
+
+  const setArray = [];
+  for (let index = 0; index < Object.keys(placeholderObject).length; index++) {
+    const property = Object.keys(placeholderObject)[index];
+    const placeholderName = 'pt' + index;
+
+    // skip keys since they are already declared
+    switch (property) {
+    case 'domain':
+      continue;
+
+    case 'alias_address':
+      continue;
+
+    case 'use_count':
+      setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
+      break;
+
+    default:
+      setArray.push(`#${placeholderName} = :${placeholderName}`);
+      break;
+    }
+
+    console.log('common.js:updateAliasItem -- adding property ' + property + '=' + placeholderObject[property]);
+    params.ExpressionAttributeNames[`#${placeholderName}`] = property;
+    params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[property];
+  }
+
+  // Create UpdateExpression
+  params.UpdateExpression = 'SET ' + setArray.join(', ');
+  console.log('common.js:updateAliasItem -- ddbDocClient parameters: ' + JSON.stringify(params));
+  const data = await sendDocClientCommand(new UpdateCommand(params));
+  console.log('common.js:updateAliasItem -- Received data: ', JSON.stringify(data));
+
+  if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
+
+  return { 'affectedRows': 1, 'Item': placeholderObject };
 }
 
 // Creates the alias object that aligns with the API declared schema
