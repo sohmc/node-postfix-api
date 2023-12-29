@@ -36,7 +36,7 @@ export async function execute(_pathParameters = [], _queryParameters = {}, reque
   return lambdaResponseObject;
 }
 
-async function insertAliasObject(placeholderObject) {
+export async function insertAliasObject(placeholderObject) {
   let returnObject = {
     statusCode: 405,
     body: {
@@ -58,7 +58,7 @@ async function insertAliasObject(placeholderObject) {
     },
     'Item': {
       'application': 'tacomail',
-      'sub_domain': placeholderObject.domain || 'foobar',
+      'sub_domain': placeholderObject.domain || 'NOT-PROPERLY-SET',
       'alias_address': placeholderObject.alias_address,
       'destination': placeholderObject.destination,
       'full_address': `${placeholderObject.alias_address}@${placeholderObject.domain}`,
@@ -91,7 +91,7 @@ async function insertAliasObject(placeholderObject) {
   return returnObject;
 }
 
-async function checkDomainConfig(domainToCheck) {
+export async function checkDomainConfig(domainToCheck) {
   const domainListResponse = await getDomainConfig([], {});
   const domainList = domainListResponse.body;
 

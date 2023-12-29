@@ -1,11 +1,12 @@
 import { execute as getAlias } from './GET';
-import { updateItem } from '../_utilities';
+import { insertAliasObject, checkDomainConfig } from './POST';
+import { updateItem, deleteItem } from '../_utilities';
 
 const allowedParameters = {
-  'alias': 'full_address',
-  'q': 'full_address',
+  'alias': 'alias_address',
+  'domain': 'domain',
   'destination': 'destination',
-  'active': 'active_alias',
+  'active': 'active',
   'ignore': 'ignore_alias',
 };
 
@@ -33,6 +34,8 @@ export async function execute(pathParameters = [], queryParameters = {}, request
     lambdaResponseObject.body.code = 405;
     lambdaResponseObject.body.message = 'must provide a property to update';
   }
+
+  return lambdaResponseObject;
 }
 
 export async function updateAliasObject(uuid, requestBody) {
@@ -60,23 +63,36 @@ export async function updateAliasObject(uuid, requestBody) {
   if (currentAliasItem.body.length != 1) return returnObject;
 
   const currentAliasInfo = currentAliasItem.body[0];
+  console.log('(alias/PATCH.updateAliasObject) - currentAliasInfo for uuid is ' + JSON.stringify(currentAliasInfo));
 
   // If trying to change alias_address or domain, then the entire record needs to be recreated.
-  if (Object.prototype.hasOwnProperty.call(placeholderObject, 'alias_address') || Object.prototype.hasOwnProperty.call(placeholderObject, 'domain')) {
-    returnObject.statusCode = 503;
-    returnObject.body = '{"message": "Not Refactored Yet"}';
-    console.log('Updating active/inactive not refactored');
-    return returnObject;
+  if (Object.prototype.hasOwnProperty.call(requestBody, 'alias') || Object.prototype.hasOwnProperty.call(requestBody, 'domain')) {
+    // returnObject.statusCode = 503;
+    // returnObject.body = '{"message": "Not Refactored Yet"}';
+    // console.log('Updating active/inactive not refactored');
+    // return returnObject;
+
+    if (Object.prototype.hasOwnProperty.call(requestBody, 'domain') && (await checkDomainConfig(requestBody.domain) == -1)) {
+      // return error message stating domain is invalid
+      returnObject.body.message = 'domain is either inactive or invalid';
+      return returnObject;
+    }
+
+    console.log('(alias/PATCH.updateAliasObject) Received request to change either the alias_address or the domain.  We must delete the existing record first.');
 
     for (const aliasProperty in currentAliasInfo) {
       // if the property isn't set in the placeholderObject, set it with the current value.
       if (!Object.prototype.hasOwnProperty.call(placeholderObject, aliasProperty)) placeholderObject[aliasProperty] = currentAliasInfo[aliasProperty];
     }
 
-    console.log('Current placeholderObject: ' + JSON.stringify(placeholderObject));
+    // alias_address doesn't get set if it's not sent as part of the request.
+    // So copy it from the getAlias call
+    if (!Object.prototype.hasOwnProperty.call(placeholderObject, 'alias_address')) placeholderObject['alias_address'] = placeholderObject.alias;
+
+    console.log('(alias/PATCH.updateAliasObject) Current placeholderObject: ' + JSON.stringify(placeholderObject));
 
     // Delete Alias First
-    const deleteItemResults = await commonFunctions.deleteAliasItem(currentAliasInfo);
+    const deleteItemResults = await deleteItem(currentAliasInfo);
     console.log('deleteItem returned: ' + JSON.stringify(deleteItemResults));
     if (Object.prototype.hasOwnProperty.call(deleteItemResults, '$fault')) {
       returnObject.body.message = 'Alias needed to be deleted, but the operation failed.';
@@ -86,7 +102,7 @@ export async function updateAliasObject(uuid, requestBody) {
     // Now create the Item
     returnObject = await insertAliasObject(placeholderObject);
   } else {
-    console.log('updating alias per normal UpdateItem command');
+    console.log('(alias/PATCH.updateAliasObject) updating alias per normal UpdateItem command');
     placeholderObject.alias_address = currentAliasInfo.alias;
     placeholderObject.domain = currentAliasInfo.domain;
     const updateItemResults = await updateItem(placeholderObject);
@@ -98,6 +114,8 @@ export async function updateAliasObject(uuid, requestBody) {
       returnObject.body.message = 'Could not update alias.';
     }
   }
+
+  if (returnObject.statusCode == 201) returnObject.statusCode = 200;
 
   return returnObject;
 }

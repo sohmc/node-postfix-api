@@ -3,7 +3,7 @@ require('dotenv').config();
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const client = new DynamoDB({ region: 'us-east-1' });
 
-const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, _DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const ddbDocClient = DynamoDBDocument.from(client);
 
 
@@ -27,7 +27,7 @@ export async function getItem(placeholderObject) {
 }
 
 export async function putItem(placeholderObject) {
-  console.log('utilities/putAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+  console.log('utilities/putItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
 
   const params = {
     'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
@@ -82,7 +82,7 @@ export async function updateItem(placeholderObject) {
   return { 'affectedRows': 1, 'Item': placeholderObject };
 }
 
-async function deleteItem(placeholderObject) {
+export async function deleteItem(placeholderObject) {
   console.log('common.js:deleteAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
 
   const params = {

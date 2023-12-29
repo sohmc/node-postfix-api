@@ -1,9 +1,25 @@
 import expect from 'expect';
 import { handler } from '../index';
+import { deleteItem } from '../newEndpoints/_utilities';
 
+const prefix = 'peacelilly';
 const r = (Math.random() + 1).toString(36).substring(7).toLowerCase();
-const newAlias = 'peacelilly.' + r;
+const newAlias = `${prefix}.${r}`;
 const newFullAddress = newAlias + '@capricadev.tk';
+let createdAlias = {};
+
+afterAll(async () => {
+  if (Object.prototype.hasOwnProperty.call(createdAlias, 'uuid')) {
+    console.log('Doing Cleanup of alias ' + JSON.stringify(createdAlias));
+    const aliasToDelete = {
+      alias: createdAlias.alias,
+      domain: createdAlias.domain,
+    };
+
+    const data = await deleteItem(aliasToDelete);
+    console.log(data);
+  }
+});
 
 test('Create an Alias', async () => {
   console.log('Creating an Alias for ' + newFullAddress);
@@ -27,4 +43,28 @@ test('Create an Alias', async () => {
   expect(result).toHaveProperty('body');
   expect(result.body).toHaveLength(1);
   expect(result.body[0].fullEmailAddress).toBe(newFullAddress);
+  createdAlias = result.body[0];
+
+  const changeAlias = newAlias;
+  const changeFullAddress = changeAlias + '@capricatest.tk';
+  console.log('Updating ' + newFullAddress + ' to ' + changeFullAddress);
+  const lambdaChangeAliasEvent = {
+    'requestContext': {
+      'http': {
+        'method': 'PATCH',
+        'path': '/alias/' + createdAlias.uuid,
+      },
+    },
+    'body': JSON.stringify({
+      'domain': 'capricatest.tk',
+    }),
+  };
+
+  const result2 = await handler(lambdaChangeAliasEvent, {});
+  console.log(JSON.stringify(result));
+  expect(result2.statusCode).toEqual(200);
+  expect(result2).toHaveProperty('body');
+  expect(result2.body).toHaveLength(1);
+  expect(result2.body[0].fullEmailAddress).toBe(changeFullAddress);
+  createdAlias = result2.body[0];
 });
