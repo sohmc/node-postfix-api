@@ -11,7 +11,7 @@ export async function getItem(placeholderObject) {
   console.log('utilities/getItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
   const params = {
     'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
-    ...placeholderObject
+    ...placeholderObject,
   };
 
   console.log('ddbDocClient parameters: ' + JSON.stringify(params));
@@ -31,16 +31,7 @@ export async function putItem(placeholderObject) {
 
   const params = {
     'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
-    'Key': {
-      'alias_address': placeholderObject.alias_address,
-      'sub_domain': placeholderObject.domain,
-    },
-    'Item': { ...placeholderObject.Item },
-    'ConditionExpression': 'attribute_not_exists(#kn1) AND attribute_not_exists(#kn2)',
-    'ExpressionAttributeNames': {
-      '#kn1': 'sub_domain',
-      '#kn2': 'alias_address',
-    },
+    ...placeholderObject,
   };
 
   console.log('utilities/putItem -- ddbDocClient parameters: ' + JSON.stringify(params));
@@ -77,7 +68,7 @@ export async function updateItem(placeholderObject) {
   placeholderObject.modified_datetime = d;
 
   const expressionAttributes = buildExpressionAttributes(placeholderObject);
-  params.ExpressionAttributeNames  = { ...params.ExpressionAttributeNames, ...expressionAttributes.ExpressionAttributeNames };
+  params.ExpressionAttributeNames = { ...params.ExpressionAttributeNames, ...expressionAttributes.ExpressionAttributeNames };
   params.ExpressionAttributeValues = { ...params.ExpressionAttributeValues, ...expressionAttributes.ExpressionAttributeValues };
 
   // Create UpdateExpression
@@ -133,10 +124,11 @@ export function buildExpressionAttributes(attributesObject) {
       expressionsAttributes.ExpressionAttributeNames[`#${placeholderName}`] = property;
       expressionsAttributes.ExpressionAttributeValues[`:${placeholderName}`] = attributesObject[property];
 
-      if (property == 'use_count')
+      if (property == 'use_count') {
         expressionsAttributes.setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
-      else 
+      } else {
         expressionsAttributes.setArray.push(`#${placeholderName} = :${placeholderName}`);
+      }
     }
 
     console.log('utilities/buildExpressionAttributes -- Key: ' + placeholderName + ' - adding property ' + property + '=' + attributesObject[property]);

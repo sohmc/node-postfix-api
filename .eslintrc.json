@@ -2,13 +2,13 @@
 	"extends": "eslint:recommended",
 	"env": {
 		"node": true,
-		"es6": true
+		"es6": true,
+		"jest": true
 	},
 	"parserOptions": {
 		"ecmaVersion": 2021,
 		"sourceType": "module"
 	},
-	"plugins": ["jest"],
 	"rules": {
     "arrow-spacing": ["warn", { "before": true, "after": true }],
 		"brace-style": ["error", "1tbs", { "allowSingleLine": true }],

@@ -117,8 +117,8 @@ async function getAliasDetails(placeholderObject) {
       'Key': {
         'alias_address': placeholderObject.alias_address,
         'sub_domain': placeholderObject.domain,
-      }
-    }
+      },
+    };
     aliasInformation = await getItem(params);
   } else {
     aliasInformation = await aliasQuery(placeholderObject);
@@ -228,7 +228,7 @@ async function updateAliasObject(uuid, requestBody) {
   if (Object.prototype.hasOwnProperty.call(placeholderObject, 'alias_address') || Object.prototype.hasOwnProperty.call(placeholderObject, 'domain')) {
     returnObject.statusCode = 503;
     returnObject.body = '{"message": "Not Refactored Yet"}';
-    console.log('Updating active/inactive not refactored')
+    console.log('Updating active/inactive not refactored');
     return returnObject;
 
     for (const aliasProperty in currentAliasInfo) {

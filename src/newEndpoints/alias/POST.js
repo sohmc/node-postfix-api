@@ -1,8 +1,10 @@
+import { execute as getAlias } from './GET';
 import { execute as getDomainConfig } from '../domain/GET';
+import { putItem } from '../_utilities';
 
-const requiredParameters = ['alias', 'domain', 'destination']
+const requiredParameters = ['alias', 'domain', 'destination'];
 
-export async function execute(pathParameters = [], queryParameters = {}, requestBody = {}) {
+export async function execute(_pathParameters = [], _queryParameters = {}, requestBody = {}) {
   let lambdaResponseObject = {
     statusCode: 418,
     headers: {
@@ -44,16 +46,44 @@ async function insertAliasObject(placeholderObject) {
     },
   };
 
+  const { v4: uuidv4 } = require('uuid');
+  const d = Math.floor(Date.now() / 1000);
+
+  const thisUUID = placeholderObject.uuid || uuidv4();
+
+  const params = {
+    'Key': {
+      'alias_address': placeholderObject.alias_address,
+      'sub_domain': placeholderObject.domain,
+    },
+    'Item': {
+      'application': 'tacomail',
+      'sub_domain': placeholderObject.domain || 'foobar',
+      'alias_address': placeholderObject.alias_address,
+      'destination': placeholderObject.destination,
+      'full_address': `${placeholderObject.alias_address}@${placeholderObject.domain}`,
+      'identifier': thisUUID,
+      'created_datetime': placeholderObject.created || d,
+      'modified_datetime': d,
+      'active_alias': placeholderObject.active || true,
+      'ignore_alias': placeholderObject.ignore_alias || false,
+      'use_count': parseInt(placeholderObject.count) || 1,
+    },
+    'ExpressionAttributeNames': {
+      '#postALIAS1': 'sub_domain',
+      '#postALIAS2': 'alias_address',
+    },
+    'ConditionExpression': 'attribute_not_exists(#postALIAS1) AND attribute_not_exists(#postALIAS2)',
+  };
+
   // PUT row into database
-  const queryResults = await commonFunctions.putAliasItem(placeholderObject);
+  const queryResults = await putItem(params);
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
-    const getAliasPlaceholdersObject = {
-      'alias_address': placeholderObject.alias_address,
-      'domain': placeholderObject.domain,
-    };
-    returnObject = await getAliasInformation(getAliasPlaceholdersObject);
-    returnObject.statusCode = 201;
+    returnObject = await getAlias([thisUUID]);
+
+    // Change the status code to 201 since this was just created.
+    if (returnObject.statusCode == 200) returnObject.statusCode = 201;
   } else {
     returnObject.body.message = 'Alias could not be added.';
   }
@@ -61,10 +91,9 @@ async function insertAliasObject(placeholderObject) {
   return returnObject;
 }
 
-
 async function checkDomainConfig(domainToCheck) {
   const domainListResponse = await getDomainConfig([], {});
-  const domainList = JSON.parse(domainListResponse.body);
+  const domainList = domainListResponse.body;
 
   console.log(JSON.stringify(domainList));
 
