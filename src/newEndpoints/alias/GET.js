@@ -1,4 +1,4 @@
-import { getItem, updateItem } from "../_utilities";
+import { getItem, updateItem } from '../_utilities';
 
 const allowedParameters = {
   'alias': 'full_address',
