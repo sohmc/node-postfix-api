@@ -1,4 +1,4 @@
-import { updateAliasObject } from './POST';
+import { updateAliasObject } from './PATCH';
 import { getItem, updateItem } from '../_utilities';
 
 const allowedParameters = {

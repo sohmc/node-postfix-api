@@ -101,6 +101,7 @@ export async function updateAliasObject(uuid, requestBody) {
 
     // Now create the Item
     returnObject = await insertAliasObject(placeholderObject);
+    if (returnObject.statusCode == 201) returnObject.statusCode = 200;
   } else {
     console.log('(alias/PATCH.updateAliasObject) updating alias per normal UpdateItem command');
     placeholderObject.alias_address = currentAliasInfo.alias;
@@ -109,13 +110,10 @@ export async function updateAliasObject(uuid, requestBody) {
 
     if (Object.prototype.hasOwnProperty.call(updateItemResults, 'affectedRows') && (updateItemResults.affectedRows == 1)) {
       returnObject = await getAlias([uuid]);
-      returnObject.statusCode = 201;
     } else {
       returnObject.body.message = 'Could not update alias.';
     }
   }
-
-  if (returnObject.statusCode == 201) returnObject.statusCode = 200;
 
   return returnObject;
 }

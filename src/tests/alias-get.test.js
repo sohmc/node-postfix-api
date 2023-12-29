@@ -53,7 +53,7 @@ test('Ignore peacelilly.02@capricadev.tk by alias UUID', async () => {
   const result = await handler(lambdaEvent, {});
   console.log(JSON.stringify(result));
 
-  expect(result.statusCode).toEqual(201);
+  expect(result.statusCode).toEqual(200);
   expect(result.body[0].ignore).toBeTruthy();
 });
 
@@ -70,7 +70,7 @@ test('Activate peacelilly.02@capricadev.tk by alias UUID', async () => {
   const result = await handler(lambdaEvent, {});
   console.log(JSON.stringify(result));
 
-  expect(result.statusCode).toEqual(201);
+  expect(result.statusCode).toEqual(200);
   expect(result.body[0].ignore).toBeFalsy();
   expect(result.body[0].active).toBeTruthy();
 });
