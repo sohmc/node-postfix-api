@@ -82,6 +82,29 @@ export async function updateItem(placeholderObject) {
   return { 'affectedRows': 1, 'Item': placeholderObject };
 }
 
+async function deleteItem(placeholderObject) {
+  console.log('common.js:deleteAliasItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+
+  const params = {
+    'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+    'Key': {
+      'alias_address': placeholderObject.alias,
+      'sub_domain': placeholderObject.domain,
+    },
+    'ExpressionAttributeNames': {
+      '#kn1': 'sub_domain',
+      '#kn2': 'alias_address',
+    },
+    'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
+  };
+
+  console.log('ddbDocClient parameters: ' + JSON.stringify(params));
+  const data = await sendDocClientCommand(new DeleteCommand(params));
+  console.log('ddbDocClient Received data: ', JSON.stringify(data));
+
+  return data;
+}
+
 async function sendDocClientCommand(commandPackage) {
   console.log('utilities/sendDocClientCommand -- commandPackage: ' + JSON.stringify(commandPackage));
 
