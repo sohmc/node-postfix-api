@@ -1,15 +1,13 @@
 name: Node Build and Deploy
 on:
   push:
-    branches-ignore:
-      - 'main'
+    branches:
       - 'add-jest-testing'
 
 defaults:
   run:
     shell: bash
     working-directory: 'src/'
-
 
 jobs:
   npm-test:
@@ -37,27 +35,12 @@ jobs:
 
       - name: Run npm install
         run: npm i --only=prod
-
-# ----------------------------- #
-
-  aws-deploy-dev:
-    if: startsWith(github.ref_name, 'dev-')
-    uses: ./.github/workflows/aws-deploy.yaml
-    secrets: inherit
-    with: 
-      environment-name: development
-
-  aws-deploy-ses-dev:
-    if: startsWith(github.ref_name, 'dev-ses')
-    uses: ./.github/workflows/aws-deploy.yaml
-    secrets: inherit
-    with: 
-      environment-name: development-ses
-      lambda-handler: ses.export
-
-  aws-deploy-qa-prod:
-    if: startsWith(github.ref_name, 'qa-')
-    uses: ./.github/workflows/aws-deploy.yaml
-    secrets: inherit
-    with: 
-      environment-name: production
+      
+      - name: Run coverage tests
+        run: npm test
+      
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      
