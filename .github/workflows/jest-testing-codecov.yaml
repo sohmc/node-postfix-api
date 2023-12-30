@@ -36,6 +36,15 @@ jobs:
       - name: Run npm install (include development packages for testing)
         run: npm install
       
+
+      # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 300
+          mask-aws-account-id: true
+
       - name: Run coverage tests
         run: npm test
       
