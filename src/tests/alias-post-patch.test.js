@@ -38,7 +38,6 @@ test('Create an Alias', async () => {
   };
 
   const result = await handler(lambdaEvent, {});
-  console.log(JSON.stringify(result));
   expect(result.statusCode).toEqual(201);
   expect(result).toHaveProperty('body');
   expect(result.body).toHaveLength(1);
@@ -61,10 +60,62 @@ test('Create an Alias', async () => {
   };
 
   const result2 = await handler(lambdaChangeAliasEvent, {});
-  console.log(JSON.stringify(result));
   expect(result2.statusCode).toEqual(200);
   expect(result2).toHaveProperty('body');
   expect(result2.body).toHaveLength(1);
   expect(result2.body[0].fullEmailAddress).toBe(changeFullAddress);
   createdAlias = result2.body[0];
+});
+
+test('Coverage Test - Bad Update Request with non-existent domain', async () => {
+  const lambdaEvent = {
+    'requestContext': {
+      'http': {
+        'method': 'PATCH',
+        'path': '/alias/' + createdAlias.uuid,
+      },
+    },
+    'body': JSON.stringify({
+      'domain': 'doesnotexist.tk',
+    }),
+  };
+
+  const result2 = await handler(lambdaEvent, {});
+
+  expect(result2.statusCode).toEqual(405);
+});
+
+test('Coverage Test - Bad Update Request with no changes', async () => {
+  const lambdaEvent = {
+    'requestContext': {
+      'http': {
+        'method': 'PATCH',
+        'path': '/alias/' + createdAlias.uuid,
+      },
+    },
+  };
+
+  const result2 = await handler(lambdaEvent, {});
+
+  expect(result2.statusCode).toEqual(405);
+});
+
+test('Coverage Test - Bad Create Alias request with missing options.', async () => {
+  console.log('Creating an Alias for ' + newFullAddress);
+  const lambdaEvent = {
+    'requestContext': {
+      'http': {
+        'method': 'POST',
+        'path': '/alias',
+      },
+    },
+    'body': JSON.stringify({
+      'domain': 'capricadev.tk',
+      'destination': 'S3',
+    }),
+  };
+
+  const result2 = await handler(lambdaEvent, {});
+
+  expect(result2.statusCode).toEqual(400);
 });

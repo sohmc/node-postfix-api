@@ -107,3 +107,23 @@ test('Increment count for peacelilly.02@capricadev.tk by alias UUID', async () =
 
   expect(result.statusCode).toEqual(204);
 });
+
+test('General alias query', async () => {
+  const lambdaEvent = {
+    'requestContext': {
+      'http': {
+        'method': 'GET',
+        'path': '/alias',
+      },
+    },
+    'queryStringParameters': {
+      'q': 'peacelilly',
+    },
+  };
+
+  const result = await handler(lambdaEvent, {});
+  console.log(JSON.stringify(result));
+
+  expect(result.statusCode).toEqual(200);
+  expect(result.body.length).toBeGreaterThanOrEqual(1);
+});

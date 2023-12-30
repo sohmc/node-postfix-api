@@ -4,7 +4,9 @@ import { putItem } from '../_utilities';
 
 const requiredParameters = ['alias', 'domain', 'destination'];
 
-export async function execute(_pathParameters = [], _queryParameters = {}, requestBody = {}) {
+export async function execute(pathParameters = [], queryParameters = {}, requestBody = {}) {
+  console.log(`(alias/POST) Received request with pathParameters ${JSON.stringify(pathParameters)} queryParameters ${JSON.stringify(queryParameters)} requestBody ${JSON.stringify(requestBody)}`);
+
   let lambdaResponseObject = {
     statusCode: 418,
     headers: {
@@ -17,11 +19,15 @@ export async function execute(_pathParameters = [], _queryParameters = {}, reque
     },
   };
 
-  if (requiredParameters.findIndex(property => Object.prototype.hasOwnProperty.call(requestBody, property)) === -1) {
+  if (!requiredParameters.every(property => Object.prototype.hasOwnProperty.call(requestBody, property))) {
     // return error message with property that is missing
+    lambdaResponseObject.statusCode = 400;
+    lambdaResponseObject.body.code = 400;
     lambdaResponseObject.body.message = 'missing required property: ' + requiredParameters[requiredParameters.findIndex(property => Object.prototype.hasOwnProperty.call(requestBody, property))];
   } else if (await checkDomainConfig(requestBody.domain) == -1) {
     // return error message stating domain is invalid
+    lambdaResponseObject.statusCode = 400;
+    lambdaResponseObject.body.code = 400;
     lambdaResponseObject.body.message = 'domain is either inactive or invalid';
   } else {
     const aliasObject = {
