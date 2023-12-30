@@ -46,7 +46,7 @@ jobs:
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-duration-seconds: 300
+          role-duration-seconds: 900 # minimum is 15 minutes
           mask-aws-account-id: true
 
       - name: Run coverage tests
