@@ -1,9 +1,10 @@
-name: Node Build and Deploy
+name: Deploy Lambdas
 on:
   push:
+    branches:
+      - 'dev-*'
     branches-ignore:
       - 'main'
-      - 'add-jest-testing'
 
 defaults:
   run:
@@ -12,34 +13,6 @@ defaults:
 
 
 jobs:
-  npm-test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18]
-
-    name: Node ${{ matrix.node-version }} test
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v4
-        with:
-          cache-dependency-path: '**/package-lock.json'
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
-        name: List the state of node modules
-        continue-on-error: true
-        run: npm list
-
-      - name: Run npm install
-        run: npm i --only=prod
-
-# ----------------------------- #
-
   aws-deploy-dev:
     if: startsWith(github.ref_name, 'dev-')
     uses: ./.github/workflows/aws-deploy.yaml

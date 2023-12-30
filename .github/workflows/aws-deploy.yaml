@@ -26,10 +26,10 @@ jobs:
     name: Node ${{ matrix.node-version }} build and deploy
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       
       - name: Setup Node.js environment
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           cache-dependency-path: '**/package-lock.json'
           node-version: ${{ matrix.node-version }}
@@ -109,11 +109,12 @@ jobs:
         run: unzip -l ${{ steps.download-artifact.outputs.download-path }}/function.zip
 
       # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
-      - uses: aws-actions/configure-aws-credentials@v1
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-region: us-east-1
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          role-duration-seconds: 900
+          role-duration-seconds: 900 # minimum is 15 minutes
+          mask-aws-account-id: true
       
       - name: Create or Update Lambda
         id: createLambda

@@ -1,8 +1,13 @@
 name: Node Build and Test
 on:
+  pull_request:
+    branches:
+      - 'main'
+    paths:
+      - '**.js'
   push:
     branches:
-      - 'add-jest-testing'
+      - 'main'
 
 defaults:
   run:
