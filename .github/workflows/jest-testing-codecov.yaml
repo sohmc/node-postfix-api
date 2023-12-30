@@ -15,6 +15,10 @@ jobs:
     strategy:
       matrix:
         node-version: [18]
+  
+    permissions:
+      id-token: write
+      contents: read
 
     name: Node ${{ matrix.node-version }} test
     steps:
