@@ -3,8 +3,7 @@ on:
   push:
     branches:
       - 'dev-*'
-    branches-ignore:
-      - 'main'
+      - 'qa-*'
 
 defaults:
   run:
