@@ -57,6 +57,23 @@ test('Ignore peacelilly.02@capricadev.tk by alias UUID', async () => {
   expect(result.body[0].ignore).toBeTruthy();
 });
 
+test('Deactivate peacelilly.02@capricadev.tk by alias UUID', async () => {
+  const lambdaEvent = {
+    'requestContext': {
+      'http': {
+        'method': 'GET',
+        'path': '/alias/dbabb088-40ad-4bc0-8627-d810e2d4f205/deactivate',
+      },
+    },
+  };
+
+  const result = await handler(lambdaEvent, {});
+  console.log(JSON.stringify(result));
+
+  expect(result.statusCode).toEqual(200);
+  expect(result.body[0].active).toBeFalsy();
+});
+
 test('Activate peacelilly.02@capricadev.tk by alias UUID', async () => {
   const lambdaEvent = {
     'requestContext': {

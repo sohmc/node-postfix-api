@@ -6,7 +6,7 @@ const allowedParameters = {
   'alias': 'alias_address',
   'domain': 'domain',
   'destination': 'destination',
-  'active': 'active',
+  'active': 'active_alias',
   'ignore': 'ignore_alias',
 };
 
