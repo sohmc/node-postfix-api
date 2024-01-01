@@ -1,3 +1,4 @@
+import { putItem } from '../_utilities';
 import { execute as domainGet } from './GET';
 
 export async function execute(pathParameters = [], queryParameters = {}, requestBody = {}) {
@@ -32,15 +33,15 @@ export async function execute(pathParameters = [], queryParameters = {}, request
 
     const currentConfig = await domainGet();
     console.log('domain.js:POST-CurrentConfig - ' + JSON.stringify(currentConfig));
-    const newSubDomainExists = currentConfig.body.findIndex(element => element.subdomain == placeholderObject.newSubDomain);
 
-    // If there are domains configured, UPDATE an item
-    if (currentConfig.body.length > 0) {
+    // Domains will return in an array.  If there are domains configured, UPDATE the configuration
+    if (Array.isArray(currentConfig.body)) {
       lambdaResponseObject.statusCode = 503;
       lambdaResponseObject.body = '{"message": "Not Refactored Yet"}';
       console.log('Updating an existing config object not refactored');
       return lambdaResponseObject;
       // eslint-disable-next-line no-unreachable
+      const newSubDomainExists = currentConfig.body.findIndex(element => element.subdomain == placeholderObject.newSubDomain);
       if (newSubDomainExists == -1) {
         lambdaResponseObject = await addDomainObject(placeholderObject);
       } else {
@@ -53,7 +54,7 @@ export async function execute(pathParameters = [], queryParameters = {}, request
       // lambdaResponseObject.body = '{"message": "Not Refactored Yet"}';
       // console.log('Adding new config object not refactored');
       // return lambdaResponseObject;
-      lambdaResponseObject = await addDomainConfigObject(placeholderObject);
+      lambdaResponseObject = await putTacomailConfigItem(placeholderObject);
     }
   }
 
@@ -126,44 +127,59 @@ async function addDomainConfigItem(placeholderObject) {
 }
 
 async function putTacomailConfigItem(placeholderObject) {
-  putDomainItem(placeholderObject) {
-    console.log('common.js:putDomainItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+  const responseObject = {
+    statusCode: 500,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: {
+      'code': 500,
+      'type': 'domain',
+      'message': '',
+    },
+  };
 
-    const d = Math.floor(Date.now() / 1000);
+  console.log('(domain/POST.putTacomailConfigItem) -- placeholderObject: ' + JSON.stringify(placeholderObject));
 
-    const domainInfo = new Map([
-      ['subdomain', placeholderObject.newSubDomain],
-      ['description', placeholderObject.description || ''],
-      ['active', placeholderObject.active_domain || true],
-      ['created_datetime', d],
-      ['modified_datetime', d],
-    ]);
+  const d = Math.floor(Date.now() / 1000);
 
-    const params = {
-      'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
-      'Key': {
-        'alias_address': placeholderObject.alias_address,
-        'sub_domain': placeholderObject.domain,
-      },
-      'Item': {
-        'sub_domain': placeholderObject.domain,
-        'alias_address': placeholderObject.alias_address,
-        'configValues': [domainInfo],
-      },
-      'ExpressionAttributeNames': {
-        '#kn1': 'sub_domain',
-        '#kn2': 'alias_address',
-      },
-      'ConditionExpression': 'attribute_not_exists(#kn1) AND attribute_not_exists(#kn2)',
-    };
+  const domainInfo = new Map([
+    ['subdomain', placeholderObject.newSubDomain],
+    ['description', placeholderObject.description || ''],
+    ['active', placeholderObject.active_domain || true],
+    ['created_datetime', d],
+    ['modified_datetime', d],
+  ]);
 
-    console.log('common.js:putDomainItem -- ddbDocClient parameters: ' + JSON.stringify(params));
-    const data = await sendDocClientCommand(new PutCommand(params));
-    console.log('common.js:putDomainItem -- Received data: ', JSON.stringify(data));
+  const params = {
+    'Key': {
+      'alias_address': placeholderObject.alias_address,
+      'sub_domain': placeholderObject.domain,
+    },
+    'Item': {
+      'sub_domain': placeholderObject.domain,
+      'alias_address': placeholderObject.alias_address,
+      'configValues': [domainInfo],
+    },
+    'ExpressionAttributeNames': {
+      '#kn1': 'sub_domain',
+      '#kn2': 'alias_address',
+    },
+    'ConditionExpression': 'attribute_not_exists(#kn1) AND attribute_not_exists(#kn2)',
+  };
 
-    // Return an empty array if we get anything other than 200
-    if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
+  console.log('(domain/POST.putTacomailConfigItem) -- putItem params: ' + JSON.stringify(params));
 
-    return { 'affectedRows': 1, 'Item': params.Item };
+  const data = await putItem(params);
+  if (Object.prototype.hasOwnProperty.call(data, 'affectedRows') && (data.affectedRows === 1)) {
+    // if everything was successful, get the domain information from the database and return it as a response.
+    const newDomainInfo = await domainGet({ 'sub_domain': placeholderObject.newSubDomain });
+
+    // If the new domain was fetched, return statusCode 201 for 'Created'
+    if (newDomainInfo.statusCode == 200) newDomainInfo.statusCode == 201;
+  } else {
+    responseObject.body.message = 'unable to add domain';
   }
+
+  return responseObject;
 }
