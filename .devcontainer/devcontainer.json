@@ -38,7 +38,8 @@
 				"42Crunch.vscode-openapi",
 				"redhat.vscode-yaml",
 				"github.vscode-github-actions",
-				"mhutchie.git-graph"
+				"mhutchie.git-graph",
+				"Orta.vscode-jest"
 			]
 		}
 	}

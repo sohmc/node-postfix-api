@@ -51,7 +51,7 @@ export async function updateItem(placeholderObject) {
   const d = Math.floor(Date.now() / 1000);
 
   const params = {
-    // 'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+    'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
     'Key': {
       'alias_address': placeholderObject.alias_address,
       'sub_domain': placeholderObject.domain,
@@ -149,6 +149,10 @@ export function buildExpressionAttributes(attributesObject) {
 
       if (property == 'use_count') {
         expressionsAttributes.setArray.push(`#${placeholderName} = #${placeholderName} + :${placeholderName}`);
+      } else if (property == 'configValues') {
+        // DynamoDB needs values to be marshalled as a Map/Set within an array.
+        expressionsAttributes.ExpressionAttributeValues[`:${placeholderName}`] = [attributesObject[property]];
+        expressionsAttributes.setArray.push(`#${placeholderName} = list_append(${placeholderName}, :${placeholderName})`);
       } else {
         expressionsAttributes.setArray.push(`#${placeholderName} = :${placeholderName}`);
       }

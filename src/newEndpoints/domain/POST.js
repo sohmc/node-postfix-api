@@ -36,6 +36,11 @@ export async function execute(pathParameters = [], queryParameters = {}, request
 
     // If there are domains configured, UPDATE an item
     if (currentConfig.body.length > 0) {
+      lambdaResponseObject.statusCode = 503;
+      lambdaResponseObject.body = '{"message": "Not Refactored Yet"}';
+      console.log('Updating an existing config object not refactored');
+      return lambdaResponseObject;
+      // eslint-disable-next-line no-unreachable
       if (newSubDomainExists == -1) {
         lambdaResponseObject = await addDomainObject(placeholderObject);
       } else {
@@ -44,11 +49,11 @@ export async function execute(pathParameters = [], queryParameters = {}, request
         lambdaResponseObject.body.message = 'domain exists';
       }
     } else {
-      lambdaResponseObject.statusCode = 503;
-      lambdaResponseObject.body = '{"message": "Not Refactored Yet"}';
-      console.log('Adding new config object not refactored');
-      return lambdaResponseObject;
-      // lambdaResponseObject = await addDomainConfigObject(placeholderObject);
+      // lambdaResponseObject.statusCode = 503;
+      // lambdaResponseObject.body = '{"message": "Not Refactored Yet"}';
+      // console.log('Adding new config object not refactored');
+      // return lambdaResponseObject;
+      lambdaResponseObject = await addDomainConfigObject(placeholderObject);
     }
   }
 
@@ -118,4 +123,47 @@ async function addDomainConfigItem(placeholderObject) {
   if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
 
   return { 'affectedRows': 1, 'Item': params.Item };
+}
+
+async function putTacomailConfigItem(placeholderObject) {
+  putDomainItem(placeholderObject) {
+    console.log('common.js:putDomainItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
+
+    const d = Math.floor(Date.now() / 1000);
+
+    const domainInfo = new Map([
+      ['subdomain', placeholderObject.newSubDomain],
+      ['description', placeholderObject.description || ''],
+      ['active', placeholderObject.active_domain || true],
+      ['created_datetime', d],
+      ['modified_datetime', d],
+    ]);
+
+    const params = {
+      'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+      'Key': {
+        'alias_address': placeholderObject.alias_address,
+        'sub_domain': placeholderObject.domain,
+      },
+      'Item': {
+        'sub_domain': placeholderObject.domain,
+        'alias_address': placeholderObject.alias_address,
+        'configValues': [domainInfo],
+      },
+      'ExpressionAttributeNames': {
+        '#kn1': 'sub_domain',
+        '#kn2': 'alias_address',
+      },
+      'ConditionExpression': 'attribute_not_exists(#kn1) AND attribute_not_exists(#kn2)',
+    };
+
+    console.log('common.js:putDomainItem -- ddbDocClient parameters: ' + JSON.stringify(params));
+    const data = await sendDocClientCommand(new PutCommand(params));
+    console.log('common.js:putDomainItem -- Received data: ', JSON.stringify(data));
+
+    // Return an empty array if we get anything other than 200
+    if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];
+
+    return { 'affectedRows': 1, 'Item': params.Item };
+  }
 }
