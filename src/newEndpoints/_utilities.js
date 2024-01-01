@@ -51,7 +51,7 @@ export async function updateItem(placeholderObject) {
   const d = Math.floor(Date.now() / 1000);
 
   const params = {
-    'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
+    // 'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
     'Key': {
       'alias_address': placeholderObject.alias_address,
       'sub_domain': placeholderObject.domain,

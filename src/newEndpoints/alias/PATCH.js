@@ -67,11 +67,6 @@ export async function updateAliasObject(uuid, requestBody) {
 
   // If trying to change alias_address or domain, then the entire record needs to be recreated.
   if (Object.prototype.hasOwnProperty.call(requestBody, 'alias') || Object.prototype.hasOwnProperty.call(requestBody, 'domain')) {
-    // returnObject.statusCode = 503;
-    // returnObject.body = '{"message": "Not Refactored Yet"}';
-    // console.log('Updating active/inactive not refactored');
-    // return returnObject;
-
     if (Object.prototype.hasOwnProperty.call(requestBody, 'domain') && (await checkDomainConfig(requestBody.domain) == -1)) {
       // return error message stating domain is invalid
       returnObject.body.message = 'domain is either inactive or invalid';
