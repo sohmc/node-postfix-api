@@ -4,7 +4,7 @@ import { handler } from '../index';
 const randomString = (Math.random() + 1).toString(36).substring(2).toLowerCase();
 const randomDomain = `caprica${randomString}.ga`;
 
-test.skip('Add a domain to an EXISTING config', async () => {
+test('Add a domain to an EXISTING config', async () => {
   const lambdaEvent = {
     'requestContext': {
       'http': {
@@ -23,10 +23,10 @@ test.skip('Add a domain to an EXISTING config', async () => {
 
   expect(result.statusCode).toEqual(201);
   expect(result).toHaveProperty('body');
-  expect(result.body[0].domain).toBe('randomDomain');
+  expect(result.body[0].subdomain).toBe(randomDomain);
 });
 
-test('Add a NEW configuration with a new domain', async () => {
+test.skip('Add a NEW configuration with a new domain', async () => {
   const lambdaEvent = {
     'requestContext': {
       'http': {

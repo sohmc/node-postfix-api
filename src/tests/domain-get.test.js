@@ -22,7 +22,7 @@ test('Get config for specific domain', async () => {
     'requestContext': {
       'http': {
         'method': 'GET',
-        'path': '/domain/capricatest.tk',
+        'path': '/domain/capricasp0vcmueb5h.ga',
       },
     },
   };
@@ -30,7 +30,9 @@ test('Get config for specific domain', async () => {
   const result = await handler(lambdaEvent, {});
 
   expect(result.statusCode).toEqual(200);
-  expect(result).toHaveProperty('body');
+  expect(Array.isArray(result.body)).toBeTruthy();
+  expect(result.body).toHaveLength(1);
+  expect(result.body[0].subdomain).toBe('capricasp0vcmueb5h.ga');
 });
 
 test('Do a query for domains', async () => {
@@ -41,7 +43,7 @@ test('Do a query for domains', async () => {
         'path': '/domain',
       },
       'queryStringParameters': {
-        'q': '.tk',
+        'q': '.ga',
       },
     },
   };
@@ -49,7 +51,7 @@ test('Do a query for domains', async () => {
   const result = await handler(lambdaEvent, {});
 
   expect(result.statusCode).toEqual(200);
-  expect(result).toHaveProperty('body');
+  expect(Array.isArray(result.body)).toBeTruthy();
   expect(result.body.length).toBeGreaterThanOrEqual(1);
 });
 

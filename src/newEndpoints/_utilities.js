@@ -50,29 +50,44 @@ export async function updateItem(placeholderObject) {
 
   const d = Math.floor(Date.now() / 1000);
 
-  const params = {
+  let params = {
     'TableName': process.env.POSTFIX_DYNAMODB_TABLE,
-    'Key': {
-      'alias_address': placeholderObject.alias_address,
-      'sub_domain': placeholderObject.domain,
-    },
-    'ExpressionAttributeNames': {
-      '#kn1': 'sub_domain',
-      '#kn2': 'alias_address',
-    },
-    'ExpressionAttributeValues': {},
-    'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
   };
 
   // Add modified_datetime to the update
   placeholderObject.modified_datetime = d;
 
-  const expressionAttributes = buildExpressionAttributes(placeholderObject);
-  params.ExpressionAttributeNames = { ...params.ExpressionAttributeNames, ...expressionAttributes.ExpressionAttributeNames };
-  params.ExpressionAttributeValues = { ...params.ExpressionAttributeValues, ...expressionAttributes.ExpressionAttributeValues };
+  // params outside of the function should have ExpressionAttributeNames
+  // If the object has it, add the placeholder params to the existing params object.
+  if (Object.prototype.hasOwnProperty.call(placeholderObject, 'ExpressionAttributeNames')) {
+    params = {
+      ...params,
+      ...placeholderObject,
+    };
+  } else {
+    // Build the expression attributes if it doesn't
+    const expressionAttributes = buildExpressionAttributes(placeholderObject);
+    params = {
+      ...params,
+      'Key': {
+        'alias_address': placeholderObject.alias_address,
+        'sub_domain': placeholderObject.domain,
+      },
+      'ExpressionAttributeNames': {
+        '#kn1': 'sub_domain',
+        '#kn2': 'alias_address',
+      },
+      'ExpressionAttributeValues': {},
+      'ConditionExpression': 'attribute_exists(#kn1) AND attribute_exists(#kn2)',
+    };
 
-  // Create UpdateExpression
-  params.UpdateExpression = 'SET ' + expressionAttributes.setArray.join(', ');
+    params.ExpressionAttributeNames = { ...params.ExpressionAttributeNames, ...expressionAttributes.ExpressionAttributeNames };
+    params.ExpressionAttributeValues = { ...params.ExpressionAttributeValues, ...expressionAttributes.ExpressionAttributeValues };
+
+    // Create UpdateExpression
+    params.UpdateExpression = 'SET ' + expressionAttributes.setArray.join(', ');
+  }
+
   console.log('utilities/updateItem -- ddbDocClient parameters: ' + JSON.stringify(params));
   const data = await sendDocClientCommand(new UpdateCommand(params));
   console.log('utilities/updateItem -- Received data: ', JSON.stringify(data));
