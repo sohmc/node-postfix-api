@@ -71,8 +71,8 @@ export async function insertAliasObject(placeholderObject) {
       'identifier': thisUUID,
       'created_datetime': placeholderObject.created || d,
       'modified_datetime': d,
-      'active_alias': placeholderObject.active || true,
-      'ignore_alias': placeholderObject.ignore_alias || false,
+      'active_alias': (Object.prototype.hasOwnProperty.call(placeholderObject, 'active') ? placeholderObject.active : true),
+      'ignore_alias': (Object.prototype.hasOwnProperty.call(placeholderObject, 'ignore_alias') ? placeholderObject.ignore_alias : true),
       'use_count': parseInt(placeholderObject.count) || 1,
     },
     'ExpressionAttributeNames': {

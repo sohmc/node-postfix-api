@@ -25,11 +25,11 @@ export async function execute(pathParameters = [], queryParameters = {}, request
   // are silently ignored.
   if (!Object.prototype.hasOwnProperty.call(requestBody, 'domain') || requestBody.domain.length == 0) {
     lambdaResponseObject.body.type = 'domain';
-    lambdaResponseObject.body.message = 'request body required';
+    lambdaResponseObject.body.message = 'request body required with domain property required';
   } else {
     placeholderObject.newSubDomain = requestBody.domain.trim();
     placeholderObject.description = requestBody.description || '';
-    placeholderObject.active_domain = requestBody.active || true;
+    placeholderObject.active = (Object.prototype.hasOwnProperty.call(requestBody, 'active') ? requestBody.active : true);
 
     const currentConfig = await domainGet();
     console.log('domain.js:POST-CurrentConfig - ' + JSON.stringify(currentConfig));
@@ -50,10 +50,6 @@ export async function execute(pathParameters = [], queryParameters = {}, request
         lambdaResponseObject.body.message = 'domain exists';
       }
     } else {
-      // lambdaResponseObject.statusCode = 503;
-      // lambdaResponseObject.body = '{"message": "Not Refactored Yet"}';
-      // console.log('Adding new config object not refactored');
-      // return lambdaResponseObject;
       lambdaResponseObject = await putTacomailConfigItem(placeholderObject, false);
     }
   }
@@ -83,7 +79,7 @@ async function putTacomailConfigItem(placeholderObject, configAlreadyExists = fa
   const domainInfo = new Map([
     ['subdomain', placeholderObject.newSubDomain],
     ['description', placeholderObject.description || ''],
-    ['active', placeholderObject.active_domain || true],
+    ['active', (Object.prototype.hasOwnProperty.call(placeholderObject, 'active') ? placeholderObject.active : true)],
     ['created_datetime', d],
     ['modified_datetime', d],
   ]);

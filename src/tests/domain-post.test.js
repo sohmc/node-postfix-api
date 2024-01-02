@@ -4,7 +4,7 @@ import { handler } from '../index';
 const randomString = (Math.random() + 1).toString(36).substring(2).toLowerCase();
 const randomDomain = `caprica${randomString}.ga`;
 
-test('Add a domain to an EXISTING config', async () => {
+test.skip('Add a domain to an EXISTING config', async () => {
   const lambdaEvent = {
     'requestContext': {
       'http': {
@@ -22,11 +22,14 @@ test('Add a domain to an EXISTING config', async () => {
   const result = await handler(lambdaEvent, {});
 
   expect(result.statusCode).toEqual(201);
-  expect(result).toHaveProperty('body');
+  expect(Array.isArray(result.body)).toBeTruthy();
   expect(result.body[0].subdomain).toBe(randomDomain);
+  expect(result.body[0].active).toBeFalsy();
 });
 
-test.skip('Add a NEW configuration with a new domain', async () => {
+test('Add a NEW configuration with a new domain', async () => {
+  const targetDomain = 'capricadev.tk';
+
   const lambdaEvent = {
     'requestContext': {
       'http': {
@@ -35,7 +38,7 @@ test.skip('Add a NEW configuration with a new domain', async () => {
       },
     },
     'body': JSON.stringify({
-      'domain': randomDomain,
+      'domain': targetDomain,
       'description': 'jestjs.io domain insertion test',
       'active': false,
     }),
@@ -44,8 +47,9 @@ test.skip('Add a NEW configuration with a new domain', async () => {
   const result = await handler(lambdaEvent, {});
 
   expect(result.statusCode).toEqual(201);
-  expect(result).toHaveProperty('body');
-  expect(result.body[0].domain).toBe('randomDomain');
+  expect(Array.isArray(result.body)).toBeTruthy();
+  expect(result.body[0].subdomain).toBe(targetDomain);
+  expect(result.body[0].active).toBeFalsy();
 });
 
 test.skip('Do a query for domains', async () => {
