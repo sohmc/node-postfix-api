@@ -70,6 +70,7 @@ test('Update capricatest.tk entry', async () => {
 
   expect(result.statusCode).toEqual(200);
   expect(result.body).toHaveLength(1);
+  expect(result.body[0].subdomain).toBe('capricatest.tk');
   expect(result.body[0].description).toBe('jestjs.io domain insertion test - ' + randomString);
   expect(result.body[0].active).toBeTruthy();
 });

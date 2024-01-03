@@ -25,10 +25,10 @@ export async function execute(pathParameters = [], queryParameters = {}, request
 
   // If there is a path parameter and there is at least one accepted property in the request body, then continue
   if ((pathParameters.length > 0) && (allowedProperties.findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
-    const searchingSubdomain = pathParameters[0].trim();
+    placeholderObject.subdomain = pathParameters[0].trim();
     const currentConfig = await domainGet();
     console.log('domain.js:POST-CurrentConfig - ' + JSON.stringify(currentConfig));
-    const subDomainPosition = currentConfig.body.findIndex(element => element.subdomain == searchingSubdomain);
+    const subDomainPosition = currentConfig.body.findIndex(element => element.subdomain == placeholderObject.subdomain);
 
     if (subDomainPosition == -1) {
       lambdaResponseObject.statusCode = 405;
@@ -42,7 +42,7 @@ export async function execute(pathParameters = [], queryParameters = {}, request
         }
       }
 
-      lambdaResponseObject = await updateDomainConfigObject(placeholderObject, subDomainPosition, searchingSubdomain);
+      lambdaResponseObject = await updateDomainConfigObject(placeholderObject, subDomainPosition);
     }
   } else {
     lambdaResponseObject.statusCode = 405;
@@ -53,7 +53,7 @@ export async function execute(pathParameters = [], queryParameters = {}, request
   return lambdaResponseObject;
 }
 
-async function updateDomainConfigObject(placeholderObject, subDomainPosition, subdomain) {
+async function updateDomainConfigObject(placeholderObject, subDomainPosition) {
   let returnObject = {
     statusCode: 405,
     body: {
@@ -67,7 +67,7 @@ async function updateDomainConfigObject(placeholderObject, subDomainPosition, su
   const queryResults = await updateDomainConfigItem(placeholderObject, subDomainPosition);
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
     // if everything was successful, get the domain information from the database and return it as a response.
-    returnObject = await domainGet([subdomain]);
+    returnObject = await domainGet([placeholderObject.subdomain]);
   } else {
     returnObject.body.type = 'domain';
     returnObject.body.message = 'error updating domain in configuration';
@@ -101,11 +101,10 @@ async function updateDomainConfigItem(placeholderObject, subDomainPosition) {
     const property = Object.keys(placeholderObject)[index];
     const placeholderName = 'domainPATCH' + index;
 
-    if ((property != 'domain') && (property != 'alias_address')) {
-      setArray.push(`#kn1[${subDomainPosition}].#${placeholderName} = :${placeholderName}`);
-    }
+    if ((property == 'domain') || (property == 'alias_address')) continue;
 
     console.log('common.js:updateDomainConfigItem -- adding property ' + property + '=' + placeholderObject[property]);
+    setArray.push(`#kn1[${subDomainPosition}].#${placeholderName} = :${placeholderName}`);
     params.ExpressionAttributeNames[`#${placeholderName}`] = property;
     params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[property];
   }
