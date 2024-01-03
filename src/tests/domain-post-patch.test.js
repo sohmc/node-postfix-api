@@ -52,23 +52,25 @@ test.skip('Add a NEW configuration with a new domain', async () => {
   expect(result.body[0].active).toBeFalsy();
 });
 
-test.skip('Do a query for domains', async () => {
+test('Update capricatest.tk entry', async () => {
   const lambdaEvent = {
     'requestContext': {
       'http': {
-        'method': 'GET',
-        'path': '/domain',
-      },
-      'queryStringParameters': {
-        'q': '.tk',
+        'method': 'PATCH',
+        'path': '/domain/capricatest.tk',
       },
     },
+    'body': JSON.stringify({
+      'description': 'jestjs.io domain insertion test - ' + randomString,
+      'active': true,
+    }),
   };
 
   const result = await handler(lambdaEvent, {});
 
   expect(result.statusCode).toEqual(200);
-  expect(result).toHaveProperty('body');
-  expect(result.body.length).toBeGreaterThanOrEqual(1);
+  expect(result.body).toHaveLength(1);
+  expect(result.body[0].description).toBe('jestjs.io domain insertion test - ' + randomString);
+  expect(result.body[0].active).toBeTruthy();
 });
 
