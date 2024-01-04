@@ -1,4 +1,4 @@
-const aliasApi = require('./endpoints/alias.js');
+import { execute as getAlias } from './newEndpoints/alias/GET';
 
 /* Lambda must return a callback with one of these dispositions:
     - STOP_RULE—No further actions in the current receipt rule will be processed, but further receipt rules can be processed.
@@ -87,7 +87,7 @@ function removeSubAddressExtension(emailAddress) {
 
 async function isActiveEmail(emailAddress) {
   console.log('ses.js:isActiveEmail -- ' + JSON.stringify(emailAddress));
-  const apiResponse = await aliasApi.execute('GET', [], { 'alias': emailAddress });
+  const apiResponse = await getAlias([], { 'alias': emailAddress });
   const apiResponseBody = JSON.parse(apiResponse.body);
   console.log('ses.js:isActiveEmail -- ' + JSON.stringify(emailAddress) + ' :: ' + JSON.stringify(apiResponseBody));
 
@@ -100,7 +100,7 @@ async function isActiveEmail(emailAddress) {
 
 async function isIgnoreAlias(emailAddress) {
   console.log('ses.js:isIgnoreAlias -- ' + JSON.stringify(emailAddress));
-  const apiResponse = await aliasApi.execute('GET', [], { 'alias': emailAddress });
+  const apiResponse = await getAlias([], { 'alias': emailAddress });
   const apiResponseBody = JSON.parse(apiResponse.body);
   console.log('ses.js:isIgnoreAlias -- ' + JSON.stringify(emailAddress) + ' :: ' + JSON.stringify(apiResponseBody));
 
@@ -111,14 +111,14 @@ async function isIgnoreAlias(emailAddress) {
 }
 
 async function incrementAliasCount(emailAddress) {
-  const apiResponse = await aliasApi.execute('GET', [], { 'alias': emailAddress });
+  const apiResponse = await getAlias([], { 'alias': emailAddress });
   const apiResponseBody = JSON.parse(apiResponse.body);
 
   if (apiResponseBody.length == 0) {
     return false;
   } else {
     for (const alias of apiResponseBody) {
-      const aliasIncrement = await aliasApi.execute('GET', [alias.uuid, 'count']);
+      const aliasIncrement = await getAlias([alias.uuid, 'count']);
       if (aliasIncrement.statusCode != 204) return false;
     }
   }
