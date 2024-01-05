@@ -2,7 +2,7 @@ import expect from 'expect';
 import { handler } from '../ses';
 
 // https://jestjs.io/docs/asynchronous#callbacks
-test('Check if email exists', done => {
+test('Initial Encounter - Check if email exists', done => {
   const lambdaEvent = {
     'Records': [
       {
