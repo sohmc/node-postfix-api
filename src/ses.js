@@ -57,7 +57,7 @@ exports.handler = (lambdaEvent, lambdaContext, callback) => {
   });
 };
 
-function removeSubAddressExtension(emailAddress) {
+export function removeSubAddressExtension(emailAddress) {
   console.log('ses.js:removeSubAddressExtension -- emailAddress: ' + emailAddress);
   const allowedSeparators = ['+', '--', '#', '='];
   let alias_address = '';
