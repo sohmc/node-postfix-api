@@ -26,7 +26,7 @@ jobs:
       environment-name: development-ses
       lambda-handler: ses.export
 
-  aws-deploy-qa-prod:
+  aws-deploy-ses-qa-prod:
     if: startsWith(github.ref_name, 'qa-')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
