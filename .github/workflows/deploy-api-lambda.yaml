@@ -6,6 +6,9 @@ on:
       - 'qa-*'
     paths:
       - '**.js'
+      - '.ci/**'
+      - '.github/workflows/aws-deploy.yaml'
+      - '.github/workflows/deploy-api-lambda.yaml'
       - '!src/bable.config.js'
       - '!ses.js'
 
