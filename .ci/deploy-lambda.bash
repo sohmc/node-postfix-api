@@ -142,7 +142,7 @@ function updateFunctionMetadata {
     --role ${LAMBDA_EXECUTION_ROLE} \
     --timeout ${LAMBDA_TIMEOUT} \
     --memory-size ${LAMBDA_MEMORY_SIZE} \
-    --description ${BUILD_ID}
+    --description ${BUILD_ID} \
     ${LAMBDA_VPC} \
     --environment Variables={${LAMBDA_ENV_VARS}}
 }
