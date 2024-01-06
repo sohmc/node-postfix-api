@@ -88,7 +88,7 @@ export function removeSubAddressExtension(emailAddress) {
 async function isActiveEmail(emailAddress) {
   console.log('ses.js:isActiveEmail -- ' + JSON.stringify(emailAddress));
   const apiResponse = await getAlias([], { 'alias': emailAddress });
-  const apiResponseBody = JSON.parse(apiResponse.body);
+  const apiResponseBody = apiResponse.body;
   console.log('ses.js:isActiveEmail -- ' + JSON.stringify(emailAddress) + ' :: ' + JSON.stringify(apiResponseBody));
 
   // Response Code 405 = Alias does not Exist
@@ -112,7 +112,7 @@ async function isIgnoreAlias(emailAddress) {
 
 async function incrementAliasCount(emailAddress) {
   const apiResponse = await getAlias([], { 'alias': emailAddress });
-  const apiResponseBody = JSON.parse(apiResponse.body);
+  const apiResponseBody = apiResponse.body;
 
   if (apiResponseBody.length == 0) {
     return false;

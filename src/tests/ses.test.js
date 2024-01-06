@@ -38,7 +38,41 @@ test('Initial Encounter - Check if email exists', done => {
   handler(lambdaEvent, {}, checkResult);
 });
 
-test('Second Encounter - This email is active and not ignored', done => {
+test('Initial Encounter - Email does not exist', done => {
+  const lambdaEvent = {
+    'Records': [
+      {
+        'ses': {
+          'mail': {
+            'destination': [
+              'doesnotexist@capricadev.tk',
+            ],
+            'headers': [
+              {
+                'name': 'X-SES-Spam-Verdict',
+                'value': 'PASS',
+              },
+              {
+                'name': 'X-SES-Virus-Verdict',
+                'value': 'PASS',
+              },
+            ],
+          },
+        },
+      },
+    ],
+  };
+
+  function checkResult(_isNull = null, sesDisposition) {
+    expect(sesDisposition.disposition).toBe('CONTINUE');
+    done();
+  }
+
+  handler(lambdaEvent, {}, checkResult);
+});
+
+
+test('Second Encounter - This email is active and not ignored and triggers incrementAliasCount', done => {
   const lambdaEvent = {
     'Records': [
       {
