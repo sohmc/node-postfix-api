@@ -1,5 +1,8 @@
 # tacomail - An E-mail Server based on AWS Simple Email Service (SES) and DynamoDB
 
+[![codecov](https://codecov.io/gh/sohmc/node-postfix-api/graph/badge.svg?token=B3QX69JM1M)](https://codecov.io/gh/sohmc/node-postfix-api)
+
+
 Based on my implementation of [postfix + MySQL](https://www.postfix.org/MYSQL_README.html), tacomail aims to replicate the ability to have virtual email addresses that you can create, disable, and pause as needed.
 
 Instead of requiring a standing server, tacomail is deployed in AWS using the following services:
