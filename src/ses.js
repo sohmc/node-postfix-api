@@ -101,7 +101,7 @@ async function isActiveEmail(emailAddress) {
 async function isIgnoreAlias(emailAddress) {
   console.log('ses.js:isIgnoreAlias -- ' + JSON.stringify(emailAddress));
   const apiResponse = await getAlias([], { 'alias': emailAddress });
-  const apiResponseBody = JSON.parse(apiResponse.body);
+  const apiResponseBody = apiResponse.body;
   console.log('ses.js:isIgnoreAlias -- ' + JSON.stringify(emailAddress) + ' :: ' + JSON.stringify(apiResponseBody));
 
   if (apiResponseBody.length == 0) return false;

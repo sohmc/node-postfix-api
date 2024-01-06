@@ -38,7 +38,7 @@ test('Initial Encounter - Check if email exists', done => {
   handler(lambdaEvent, {}, checkResult);
 });
 
-test('Second Ecnounter - Check if email is set to ignore', done => {
+test('Second Encounter - This email is active and not ignored', done => {
   const lambdaEvent = {
     'Records': [
       {
@@ -69,6 +69,43 @@ test('Second Ecnounter - Check if email is set to ignore', done => {
 
   function checkResult(_isNull = null, sesDisposition) {
     expect(sesDisposition.disposition).toBe('STOP_RULE');
+    done();
+  }
+
+  handler(lambdaEvent, {}, checkResult);
+});
+
+test('Second Encounter - This email is active but set to be ignored', done => {
+  const lambdaEvent = {
+    'Records': [
+      {
+        'ses': {
+          'mail': {
+            'destination': [
+              'testing.ignore@capricadev.tk',
+            ],
+            'headers': [
+              {
+                'name': 'X-SES-Spam-Verdict',
+                'value': 'PASS',
+              },
+              {
+                'name': 'X-SES-Virus-Verdict',
+                'value': 'PASS',
+              },
+              {
+                'name': 'X-Postfix-Check-2',
+                'value': 'true',
+              },
+            ],
+          },
+        },
+      },
+    ],
+  };
+
+  function checkResult(_isNull = null, sesDisposition) {
+    expect(sesDisposition.disposition).toBe('CONTINUE');
     done();
   }
 
