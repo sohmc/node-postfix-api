@@ -1,0 +1,31 @@
+name: Deploy API Lambdas
+on:
+  push:
+    branches:
+      - 'dev-*'
+      - 'qa-*'
+    paths:
+      - '**.js'
+      - '!src/bable.config.js'
+      - '!ses.js'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: 'src/'
+
+
+jobs:
+  aws-deploy-dev:
+    if: startsWith(github.ref_name, 'dev-')
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: development
+
+  aws-deploy-qa-prod:
+    if: startsWith(github.ref_name, 'qa-')
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: production
