@@ -7,21 +7,21 @@ on:
     paths:
       - '**.js'
       - '!src/bable.config.js'
-      - '!ses.js'
+      - '!index.js'
 
 defaults:
   run:
     shell: bash
     working-directory: 'src/'
 
-
 jobs:
-  aws-deploy-dev:
-    if: startsWith(github.ref_name, 'dev-')
+  aws-deploy-ses-dev:
+    if: startsWith(github.ref_name, 'dev-ses')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      environment-name: development
+      environment-name: development-ses
+      lambda-handler: ses.export
 
   aws-deploy-qa-prod:
     if: startsWith(github.ref_name, 'qa-')
