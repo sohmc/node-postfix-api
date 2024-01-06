@@ -30,7 +30,7 @@ Since the bulk of table operations are about email aliases, the keys to the Dyna
 | Attribute | Value | Description |
 | --- |  --- | --- |
 | `sub_domain` | *domain or subdomain* | A FQDN of a domain or subdomain where you want to create aliases. | 
-| `alias_address` | `tacomail-config` | The "username", or alias, of the email address. |
+| `alias_address` | *string* | The "username", or alias, of the email address. |
 | `application` | `tacomail` | Literal - Allows alternate key search by `identifier` |
 | `active_alias` | *boolean* | Boolean that indicates whether the alias is active or inactive. |
 | `ignore_alias` | *boolean* | Boolean that indicates whether the alias is being ignored. |
@@ -52,7 +52,17 @@ The following Partition and Sort Keys are reserved by tacomail to hold configura
 | `tacomail-config` | `sub_domains` | configValue | String-Set of domains that are being served |
 | `tacomail-config` | `destinations` | configValue | String-Set of destinations email aliases will forward to |
 
+## Available API Endpoints
 
-## Resource notes
+In order to properly serve the SES rules as well as to provide the interface to the DynamoDB table, three main API endpoints are available via a Lambda URL call.  How to access these APIs are available via the schema documentation.
 
-* [Maildir naming schema](http://cr.yp.to/proto/maildir.html)
+Additionally, many of the endpoints have module exports that allow other files to import their functions, allowing you to make calls to DynamoDB without deploying the code to a second Lambda function.
+
+### Environment Variables
+
+The code uses the following environment variables:
+
+| Variable Name | Value | Description |
+| --- |  --- | --- |
+| POSTFIX_DYNAMODB_TABLE | DynamoDB Table Name | **Required** Specifies the DynamoDB table where alias information is stored. |
+
