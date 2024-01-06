@@ -123,12 +123,14 @@ function updateFunctionMetadata {
     echo "Hello Github Actions Worflow: ${GITHUB_WORKFLOW}"
     GIT_SHA=$GITHUB_SHA
     BUILD_ID=${GITHUB_RUN_NUMBER}
+    LAMBDA_DESCRIPTION="Github Actions Build ID ${BUILD_ID} on commit ${GIT_SHA}"
   else
-    echo "Adding git SHA"
-    GIT_SHA=$(git rev-parse HEAD)
+    echo "Adding current branch name"
+    GIT_SHA=$(git rev-parse --abbrev-ref HEAD)
 
     echo "Setting BUILD_ID to local-build"
     BUILD_ID="local-build"
+    LAMBDA_DESCRIPTION="LOCAL-BUILD off branch ${GIT_SHA}"
   fi
 
   LAMBDA_ENV_VARS=${LAMBDA_ENV_VARS},SHA=${GIT_SHA},BUILD_ID=${BUILD_ID}
@@ -140,6 +142,7 @@ function updateFunctionMetadata {
     --role ${LAMBDA_EXECUTION_ROLE} \
     --timeout ${LAMBDA_TIMEOUT} \
     --memory-size ${LAMBDA_MEMORY_SIZE} \
+    --description ${BUILD_ID}
     ${LAMBDA_VPC} \
     --environment Variables={${LAMBDA_ENV_VARS}}
 }

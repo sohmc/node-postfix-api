@@ -1,4 +1,4 @@
-name: Deploy API Lambdas
+name: Deploy SES Lambda
 on:
   push:
     branches:
