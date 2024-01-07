@@ -1,6 +1,6 @@
-import { execute as getAlias } from './GET';
-import { insertAliasObject, checkDomainConfig } from './POST';
-import { updateItem, deleteItem } from '../_utilities';
+import { execute as getAlias } from './GET.js';
+import { insertAliasObject, checkDomainConfig } from './POST.js';
+import { updateItem, deleteItem } from '../_utilities.js';
 
 const allowedParameters = {
   'alias': 'alias_address',

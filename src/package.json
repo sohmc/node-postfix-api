@@ -10,6 +10,7 @@
   },
   "author": "",
   "license": "AGPL-3.0",
+  "type": "module",
   "description": "",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.454.0",

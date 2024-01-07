@@ -1,7 +1,12 @@
+import { fileURLToPath } from 'node:url';
 import { readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
 
-export async function handler(lambdaEvent, lambdaContext) {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+
+export const handler = async (lambdaEvent, lambdaContext) => {
   console.log('handler event: ' + JSON.stringify(lambdaEvent));
   console.log('handler context: ' + JSON.stringify(lambdaContext));
 
@@ -22,7 +27,7 @@ export async function handler(lambdaEvent, lambdaContext) {
     const endpoint = pathParameters.shift();
 
     console.log(`Requested Endpoint: ${method} ${endpoint}`);
-    const endpointFunction = loadEndpoint(method, endpoint);
+    const endpointFunction = await loadEndpoint(method, endpoint);
 
     const queryStringParameters = { ...lambdaEvent.queryStringParameters } || {};
     const requestBody = JSON.parse(lambdaEvent.body || '{}');
@@ -36,9 +41,9 @@ export async function handler(lambdaEvent, lambdaContext) {
   }
 
   return lambdaResponseObject;
-}
+};
 
-function loadEndpoint(method, targetEndpoint) {
+async function loadEndpoint(method, targetEndpoint) {
   const endpointModulesPath = join(__dirname + '/newEndpoints/' + targetEndpoint);
   const commandFilename = method + '.js';
   const endpointFiles = readdirSync(endpointModulesPath).filter(file => file.toLowerCase() === commandFilename.toLowerCase() && file != 'index.js');
@@ -47,7 +52,7 @@ function loadEndpoint(method, targetEndpoint) {
 
   const filePath = join(endpointModulesPath, endpointFiles[0]);
   console.log('Loading: ' + filePath);
-  const endpointModule = require(filePath);
+  const endpointModule = await import(filePath);
 
   // console.log('Loaded: ' + endpointModule.metadata.endpoint + ': (TYPE: ' + endpointModule.metadata.supportedMethods + ') ' + endpointModule.metadata.description);
 

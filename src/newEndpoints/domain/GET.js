@@ -1,4 +1,4 @@
-import { getItem } from '../_utilities';
+import { getItem } from '../_utilities.js';
 
 export async function execute(pathParameters = [], queryParameters = {}) {
   console.log(`(domain/GET) Received request with pathParameters ${JSON.stringify(pathParameters)} queryParameters ${JSON.stringify(queryParameters)}`);

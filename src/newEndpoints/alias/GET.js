@@ -1,5 +1,5 @@
-import { updateAliasObject } from './PATCH';
-import { getItem, updateItem } from '../_utilities';
+import { updateAliasObject } from './PATCH.js';
+import { getItem, updateItem } from '../_utilities.js';
 
 const allowedParameters = {
   'alias': 'full_address',

@@ -1,5 +1,5 @@
-import { updateItem } from '../_utilities';
-import { execute as domainGet } from './GET';
+import { updateItem } from '../_utilities.js';
+import { execute as domainGet } from './GET.js';
 
 const allowedProperties = ['description', 'active'];
 

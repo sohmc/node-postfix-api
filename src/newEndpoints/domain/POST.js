@@ -1,5 +1,5 @@
-import { updateItem, putItem } from '../_utilities';
-import { execute as domainGet } from './GET';
+import { updateItem, putItem } from '../_utilities.js';
+import { execute as domainGet } from './GET.js';
 
 export async function execute(pathParameters = [], queryParameters = {}, requestBody = {}) {
   console.log(`(domain/POST) Received request with pathParameters ${JSON.stringify(pathParameters)} queryParameters ${JSON.stringify(queryParameters)} requestBody ${JSON.stringify(requestBody)}`);

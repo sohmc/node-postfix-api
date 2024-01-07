@@ -1,6 +1,7 @@
-import { execute as getAlias } from './GET';
-import { execute as getDomainConfig } from '../domain/GET';
-import { putItem } from '../_utilities';
+import { execute as getAlias } from './GET.js';
+import { execute as getDomainConfig } from '../domain/GET.js';
+import { putItem } from '../_utilities.js';
+import { v4 as uuidv4 } from 'uuid';
 
 const requiredParameters = ['alias', 'domain', 'destination'];
 
@@ -52,7 +53,6 @@ export async function insertAliasObject(placeholderObject) {
     },
   };
 
-  const { v4: uuidv4 } = require('uuid');
   const d = Math.floor(Date.now() / 1000);
 
   const thisUUID = placeholderObject.uuid || uuidv4();

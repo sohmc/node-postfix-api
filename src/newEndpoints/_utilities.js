@@ -1,9 +1,9 @@
-require('dotenv').config();
+import 'dotenv/config';
 
-const { DynamoDB } = require('@aws-sdk/client-dynamodb');
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
 const client = new DynamoDB({ region: 'us-east-1' });
 
-const { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+import { DynamoDBDocument, GetCommand, QueryCommand, PutCommand, DeleteCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 const ddbDocClient = DynamoDBDocument.from(client);
 
 
