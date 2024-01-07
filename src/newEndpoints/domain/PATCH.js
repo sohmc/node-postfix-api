@@ -23,8 +23,7 @@ export async function execute(pathParameters = [], queryParameters = {}, request
     'alias_address': 'sub_domains',
   };
 
-  // If there is a path parameter and there is at least one accepted property in the request body, then continue
-  if ((pathParameters.length > 0) && (allowedProperties.findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
+  if (pathParameters.length > 0) {
     placeholderObject.subdomain = pathParameters[0].trim();
     const currentConfig = await domainGet();
     console.log('domain.js:POST-CurrentConfig - ' + JSON.stringify(currentConfig));
@@ -34,16 +33,23 @@ export async function execute(pathParameters = [], queryParameters = {}, request
       lambdaResponseObject.statusCode = 405;
       lambdaResponseObject.body.code = 405;
       lambdaResponseObject.body.message = 'subdomain does not exist';
-    } else {
+      return lambdaResponseObject;
+    }
+
+    // if the second path parameter is 'delete` then mark the domain for deletion, ignoring everything else
+    const deleteDomain = ((pathParameters.length > 1) && (pathParameters[1].toLowerCase() == 'delete') ? true : false);
+
+    // If we're not deleting and there is at least one accepted property in the request body, then continue
+    if ((!deleteDomain) && (allowedProperties.findIndex((property) => Object.prototype.hasOwnProperty.call(requestBody, property)) >= 0)) {
       for (const key in requestBody) {
         if (Object.hasOwnProperty.call(requestBody, key)) {
           const value = requestBody[key];
           if (allowedProperties.indexOf(key) >= 0) placeholderObject[key] = value;
         }
       }
-
-      lambdaResponseObject = await updateDomainConfigObject(placeholderObject, subDomainPosition);
     }
+
+    lambdaResponseObject = await updateDomainConfigObject(placeholderObject, subDomainPosition, deleteDomain);
   } else {
     lambdaResponseObject.statusCode = 405;
     lambdaResponseObject.body.code = 405;
@@ -53,30 +59,32 @@ export async function execute(pathParameters = [], queryParameters = {}, request
   return lambdaResponseObject;
 }
 
-async function updateDomainConfigObject(placeholderObject, subDomainPosition) {
+async function updateDomainConfigObject(placeholderObject, subDomainPosition, deleteDomain = false) {
   let returnObject = {
     statusCode: 405,
-    body: {
-      'code': 405,
-      'type': 'domain',
-      'message': 'Domain could not be updated',
-    },
   };
 
   // Update the config ITEM
-  const queryResults = await updateDomainConfigItem(placeholderObject, subDomainPosition);
+  const queryResults = await updateDomainConfigItem(placeholderObject, subDomainPosition, deleteDomain);
   if (Object.prototype.hasOwnProperty.call(queryResults, 'affectedRows') && (queryResults.affectedRows === 1)) {
-    // if everything was successful, get the domain information from the database and return it as a response.
-    returnObject = await domainGet([placeholderObject.subdomain]);
+    if (deleteDomain) {
+      returnObject.statusCode = 204;
+    } else {
+      // if everything was successful, get the domain information from the database and return it as a response.
+      returnObject = await domainGet([placeholderObject.subdomain]);
+    }
   } else {
-    returnObject.body.type = 'domain';
-    returnObject.body.message = 'error updating domain in configuration';
+    returnObject.body = {
+      'code': 405,
+      'type': 'domain',
+      'message': 'error updating domain in configuration',
+    };
   }
 
   return returnObject;
 }
 
-async function updateDomainConfigItem(placeholderObject, subDomainPosition) {
+async function updateDomainConfigItem(placeholderObject, subDomainPosition, deleteDomain) {
   console.log('common.js:updateDomainConfigItem -- placeholderObject: ' + JSON.stringify(placeholderObject));
   const d = Math.floor(Date.now() / 1000);
 
@@ -91,26 +99,33 @@ async function updateDomainConfigItem(placeholderObject, subDomainPosition) {
     },
     'ExpressionAttributeValues': {
       ':yf1': placeholderObject.subdomain,
-      ':yf2': d,
     },
     'ConditionExpression': `#kn1[${subDomainPosition}].subdomain = :yf1`,
   };
 
-  const setArray = [`#kn1[${subDomainPosition}].modified_datetime = :yf2`];
-  for (let index = 0; index < Object.keys(placeholderObject).length; index++) {
-    const property = Object.keys(placeholderObject)[index];
-    const placeholderName = 'domainPATCH' + index;
+  if (deleteDomain) {
+    params.UpdateExpression = `REMOVE #kn1[${subDomainPosition}]`;
+  } else {
+    // Add modified datetime
+    params.ExpressionAttributeValues[':yf2'] = d;
+    const setArray = [`#kn1[${subDomainPosition}].modified_datetime = :yf2`];
 
-    if ((property == 'domain') || (property == 'alias_address')) continue;
+    for (let index = 0; index < Object.keys(placeholderObject).length; index++) {
+      const property = Object.keys(placeholderObject)[index];
+      const placeholderName = 'domainPATCH' + index;
 
-    console.log('common.js:updateDomainConfigItem -- adding property ' + property + '=' + placeholderObject[property]);
-    setArray.push(`#kn1[${subDomainPosition}].#${placeholderName} = :${placeholderName}`);
-    params.ExpressionAttributeNames[`#${placeholderName}`] = property;
-    params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[property];
+      if ((property == 'domain') || (property == 'alias_address')) continue;
+
+      console.log('common.js:updateDomainConfigItem -- adding property ' + property + '=' + placeholderObject[property]);
+      setArray.push(`#kn1[${subDomainPosition}].#${placeholderName} = :${placeholderName}`);
+      params.ExpressionAttributeNames[`#${placeholderName}`] = property;
+      params.ExpressionAttributeValues[`:${placeholderName}`] = placeholderObject[property];
+    }
+
+    // Create UpdateExpression
+    params.UpdateExpression = 'SET ' + setArray.join(', ');
   }
 
-  // Create UpdateExpression
-  params.UpdateExpression = 'SET ' + setArray.join(', ');
   const data = await updateItem(params);
 
   if (Object.prototype.hasOwnProperty.call(data, '$metadata') && (data['$metadata'].httpStatusCode !== 200)) return [];

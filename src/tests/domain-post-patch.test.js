@@ -4,6 +4,21 @@ import { handler } from '../index';
 const randomString = (Math.random() + 1).toString(36).substring(2).toLowerCase();
 const randomDomain = `caprica${randomString}.ga`;
 
+afterAll(async () => {
+  const lambdaEvent = {
+    'requestContext': {
+      'http': {
+        'method': 'PATCH',
+        'path': `/domain/${randomDomain}/delete`,
+      },
+    },
+  };
+
+  console.log('Deleting test configuration ' + randomDomain);
+  const result = await handler(lambdaEvent, {});
+  expect(result.statusCode).toEqual(204);
+});
+
 test('Add a domain to an EXISTING config', async () => {
   const lambdaEvent = {
     'requestContext': {
@@ -74,4 +89,3 @@ test('Update capricatest.tk entry', async () => {
   expect(result.body[0].description).toBe('jestjs.io domain insertion test - ' + randomString);
   expect(result.body[0].active).toBeTruthy();
 });
-

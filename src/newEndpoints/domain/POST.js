@@ -36,11 +36,6 @@ export async function execute(pathParameters = [], queryParameters = {}, request
 
     // Domains will return in an array.  If there are domains configured, UPDATE the configuration
     if (Array.isArray(currentConfig.body)) {
-      // lambdaResponseObject.statusCode = 503;
-      // lambdaResponseObject.body = '{"message": "Not Refactored Yet"}';
-      // console.log('Updating an existing config object not refactored');
-      // return lambdaResponseObject;
-
       const newSubDomainExists = currentConfig.body.findIndex(element => element.subdomain == placeholderObject.newSubDomain);
       if (newSubDomainExists == -1) {
         lambdaResponseObject = await putTacomailConfigItem(placeholderObject, true);
