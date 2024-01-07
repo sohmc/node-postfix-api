@@ -1,4 +1,3 @@
-import expect from 'expect';
 import { handler } from '../index';
 
 test('Coverage Test - Bad Request', async () => {

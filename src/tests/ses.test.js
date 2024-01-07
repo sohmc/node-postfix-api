@@ -1,4 +1,3 @@
-import expect from 'expect';
 import { handler, removeSubAddressExtension } from '../ses';
 
 // https://jestjs.io/docs/asynchronous#callbacks
@@ -10,7 +9,7 @@ test('Initial Encounter - Check if email exists', done => {
           'mail': {
             'destination': [
               'testing.trumpet@capricadev.tk',
-              // 'testing.trumpet+abcd@capricadev.tk',
+              'testing.trumpet+abcd@capricadev.tk',
               // 'testing.trumpet=abcd+123845@capricadev.tk',
               // 'doesnotexist@capricadev.tk',
             ],

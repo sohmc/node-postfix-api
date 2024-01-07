@@ -1,4 +1,3 @@
-import expect from 'expect';
 import { handler } from '../index';
 
 test('Get Alias (peacelilly.02@capricadev.tk) by alias query', async () => {

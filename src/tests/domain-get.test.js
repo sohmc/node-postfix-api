@@ -1,4 +1,3 @@
-import expect from 'expect';
 import { handler } from '../index';
 
 test('Get current domain config', async () => {

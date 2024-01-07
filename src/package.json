@@ -6,7 +6,7 @@
     "zip": "rm function.zip ; zip -r function.zip ./*",
     "deploy-lambda": "bash -xe ../.ci/deploy-lambda.bash",
     "deploy-ses": "bash -xe ../.ci/deploy-lambda.bash update ../.ci/ses.env",
-    "test": "jest"
+    "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest"
   },
   "author": "",
   "license": "AGPL-3.0",

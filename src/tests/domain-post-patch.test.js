@@ -1,4 +1,3 @@
-import expect from 'expect';
 import { handler } from '../index';
 
 const randomString = (Math.random() + 1).toString(36).substring(2).toLowerCase();

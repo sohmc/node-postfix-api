@@ -5,7 +5,7 @@ import { execute as getAlias } from './newEndpoints/alias/GET';
     - STOP_RULE_SET—No further actions or receipt rules will be processed.
     - CONTINUE or any other invalid value—This means that further actions and receipt rules can be processed.
 */
-exports.handler = (lambdaEvent, lambdaContext, callback) => {
+export const handler = (lambdaEvent, lambdaContext, callback) => {
   console.log('handler event: ' + JSON.stringify(lambdaEvent));
   console.log('handler context: ' + JSON.stringify(lambdaContext));
 
