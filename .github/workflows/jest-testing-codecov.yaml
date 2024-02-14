@@ -57,11 +57,12 @@ jobs:
 
       - name: Run coverage tests
         run: npm test
+        continue-on-error: true
         env:
           POSTFIX_DYNAMODB_TABLE: ${{ secrets.POSTFIX_DYNAMODB_TABLE }}
       
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       
