@@ -75,7 +75,6 @@ function createFunction {
     --memory-size ${LAMBDA_MEMORY_SIZE} \
     --architectures ${LAMBDA_ARCHITECTURE} \
     --handler ${LAMBDA_HANDLER} \
-    ${LAMBDA_VPC} \
     --zip-file fileb://function.zip
 }
 
