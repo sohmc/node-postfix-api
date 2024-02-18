@@ -2,6 +2,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { simpleParser } from 'mailparser';
 import { removeSubAddressExtension } from './newEndpoints/emailUtilities.js';
 import { execute as getAlias } from './newEndpoints/alias/GET.js';
+import { lstatSync, writeFileSync } from 'node:fs';
 
 const s3 = new S3Client({ region: 'us-east-1' });
 
@@ -10,16 +11,16 @@ export const handler = async (lambdaEvent) => {
   // Get the object from the event and show its content type
   const bucket = lambdaEvent.Records[0].s3.bucket.name;
   const key = decodeURIComponent(lambdaEvent.Records[0].s3.object.key.replace(/\+/g, ' '));
-  const params = {
+  const s3Params = {
     Bucket: bucket,
     Key: key,
   };
 
   let s3Response = null;
   try {
-    console.log('params: ' + JSON.stringify(params));
+    console.log('params: ' + JSON.stringify(s3Params));
 
-    const s3Command = new GetObjectCommand(params);
+    const s3Command = new GetObjectCommand(s3Params);
     s3Response = await s3.send(s3Command);
   } catch (err) {
     console.log(err);
@@ -41,7 +42,43 @@ export const handler = async (lambdaEvent) => {
 
   const resolvedDestinations = await resolveAliases(destinations);
   console.log('resolvedDestinations: ' + JSON.stringify(resolvedDestinations));
+
+  const finalDelivery = resolvedDestinations.map(async (i) => {
+    await deliverMail(i, key, s3Data);
+  });
+
+  return finalDelivery;
 };
+
+async function deliverMail(destination, objectKey, emailContents) {
+  let user = null;
+
+  if (destination.endsWith('@husker.mikesoh.com')) {
+    const destinationParts = destination.split('@');
+    if (destinationParts.length > 1) user = destination[0];
+  } else if (destination == 'S3') {
+    user = 'mike';
+  } else {
+    console.log(`No suitable delivery for ${destination}.  Skipping.`);
+    return null;
+  }
+
+  if (user) {
+    const mailDir = `/mnt/Maildir/${user}/`;
+    const mailDirStats = lstatSync(`${mailDir}/`, { throwIfNoEntry: false });
+
+    if (mailDirStats.isDirectory()) {
+      const mailFile = `${mailDir}/${objectKey}`;
+      console.log(`Delivering to ${mailFile}`);
+      writeFileSync(mailFile, emailContents);
+
+      return mailFile;
+    } else {
+      console.log(`Unable to deliver to ${destination}.  Skipping.`);
+      return null;
+    }
+  }
+}
 
 function consolidateAddresses({ to, cc, bcc }) {
   const returnArray = [ ...getEmails(to), ...getEmails(cc), ...getEmails(bcc) ];
