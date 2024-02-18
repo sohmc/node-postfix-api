@@ -1,5 +1,7 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { simpleParser } from 'mailparser';
+import { removeSubAddressExtension } from './newEndpoints/emailUtilities.js';
+import { execute as getAlias } from './newEndpoints/alias/GET.js';
 
 const s3 = new S3Client({ region: 'us-east-1' });
 
@@ -36,6 +38,9 @@ export const handler = async (lambdaEvent) => {
 
   const destinations = consolidateAddresses(s3Mail);
   console.log('destinations: ' + JSON.stringify(destinations));
+
+  const resolvedDestinations = await resolveAliases(destinations);
+  console.log('resolvedDestinations: ' + JSON.stringify(resolvedDestinations));
 };
 
 function consolidateAddresses({ to, cc, bcc }) {
@@ -43,9 +48,40 @@ function consolidateAddresses({ to, cc, bcc }) {
   return returnArray;
 }
 
-function getEmails(header) {
+function getEmails(header, normalize = false) {
   if (!header?.value) return [];
 
-  const returnArray = header.value.map((i) => { return i.address; });
+  const returnArray = header.value.map((i) => { return (normalize ? removeSubAddressExtension(i.address) : i.address); });
   return returnArray;
+}
+
+async function resolveAliases(aliasArray) {
+  const returnArray = [];
+
+  for (let index = 0; index < aliasArray.length; index++) {
+    const alias = aliasArray[index];
+    const arrayResponse = await getDeliveryDestination(alias);
+    returnArray.push(...arrayResponse);
+  }
+
+  return returnArray;
+}
+
+async function getDeliveryDestination(emailAddress) {
+  console.log('s3handler.js:getDeliveryDestination -- ' + JSON.stringify(emailAddress));
+  const apiResponse = await getAlias([], { 'alias': emailAddress });
+
+  // Response Code 405 = Alias does not Exist
+  if (apiResponse?.code == 405) return [];
+
+  const apiResponseBody = apiResponse.body;
+  console.log('s3handler.js:getDeliveryDestination -- ' + JSON.stringify(emailAddress) + ' :: ' + JSON.stringify(apiResponseBody));
+
+  const aliasDetails = apiResponseBody[0];
+
+  const returnDestinationArray = [];
+  if (aliasDetails?.destination) returnDestinationArray.push(aliasDetails.destination);
+  if (aliasDetails?.destinations) returnDestinationArray.push(aliasDetails?.destinations);
+
+  return returnDestinationArray;
 }
