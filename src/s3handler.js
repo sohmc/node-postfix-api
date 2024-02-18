@@ -43,9 +43,14 @@ export const handler = async (lambdaEvent) => {
   const resolvedDestinations = await resolveAliases(destinations);
   console.log('resolvedDestinations: ' + JSON.stringify(resolvedDestinations));
 
-  const finalDelivery = resolvedDestinations.map(async (i) => {
-    await deliverMail(i, key, s3Data);
-  });
+
+  const finalDelivery = [];
+  for (let x = 0; x < resolvedDestinations.length; x++) {
+    const i = resolvedDestinations[x];
+    const deliveryLocation = await deliverMail(i, key, s3Data);
+    console.log('deliveryLocation: ' + deliveryLocation);
+    finalDelivery.push(deliveryLocation);
+  }
 
   return finalDelivery;
 };
@@ -53,9 +58,11 @@ export const handler = async (lambdaEvent) => {
 async function deliverMail(destination, objectKey, emailContents) {
   let user = null;
 
-  if (destination.endsWith('@husker.mikesoh.com')) {
+  if ((destination.endsWith('@tacomail')) || (destination.endsWith('@husker.mikesoh.com'))) {
     const destinationParts = destination.split('@');
     if (destinationParts.length > 1) user = destination[0];
+  } else if (destination.includes('@')) {
+    console.log(`Email Forwarding to ${destination} not yet supported`);
   } else if (destination == 'S3') {
     user = 'mike';
   } else {
@@ -64,7 +71,7 @@ async function deliverMail(destination, objectKey, emailContents) {
   }
 
   if (user) {
-    const mailDir = `/mnt/Maildir/${user}/`;
+    const mailDir = `/mnt/Maildir/${user}`;
     const mailDirStats = lstatSync(`${mailDir}/`, { throwIfNoEntry: false });
 
     if (mailDirStats.isDirectory()) {
@@ -77,6 +84,9 @@ async function deliverMail(destination, objectKey, emailContents) {
       console.log(`Unable to deliver to ${destination}.  Skipping.`);
       return null;
     }
+  } else {
+    console.log(`Unable to deliver to ${destination}.  Skipping.`);
+    return null;
   }
 }
 
