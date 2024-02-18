@@ -12,23 +12,40 @@ export const handler = async (lambdaEvent) => {
     Bucket: bucket,
     Key: key,
   };
+
+  let s3Response = null;
   try {
     console.log('params: ' + JSON.stringify(params));
 
     const s3Command = new GetObjectCommand(params);
-    const s3Response = await s3.send(s3Command);
-
-    // https://docs.aws.amazon.com/AmazonS3/latest/userguide/example_s3_GetObject_section.html
-    // The Body object also has 'transformToByteArray' and 'transformToWebStream' methods.
-    const s3Data = await s3Response.Body.transformToString();
-    const s3Mail = await simpleParser(s3Data);
-
-    console.log('s3Data: ' + s3Data.length);
-    console.log('s3Mail: ' + s3Mail.subject);
+    s3Response = await s3.send(s3Command);
   } catch (err) {
     console.log(err);
     const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
     console.log(message);
     throw new Error(message);
   }
+
+  // https://docs.aws.amazon.com/AmazonS3/latest/userguide/example_s3_GetObject_section.html
+  // The Body object also has 'transformToByteArray' and 'transformToWebStream' methods.
+  const s3Data = await s3Response.Body.transformToString();
+  const s3Mail = await simpleParser(s3Data);
+
+  console.log('s3Data: ' + s3Data.length);
+  console.log('s3Mail.subject: ' + s3Mail.subject);
+
+  const destinations = consolidateAddresses(s3Mail);
+  console.log('destinations: ' + JSON.stringify(destinations));
 };
+
+function consolidateAddresses({ to, cc, bcc }) {
+  const returnArray = [ ...getEmails(to), ...getEmails(cc), ...getEmails(bcc) ];
+  return returnArray;
+}
+
+function getEmails(header) {
+  if (!header?.value) return [];
+
+  const returnArray = header.value.map((i) => { return i.address; });
+  return returnArray;
+}
