@@ -1,4 +1,5 @@
-import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { simpleParser } from 'mailparser';
 
 const s3 = new S3Client({ region: 'us-east-1' });
 
@@ -14,10 +15,16 @@ export const handler = async (lambdaEvent) => {
   try {
     console.log('params: ' + JSON.stringify(params));
 
-    const s3Command = new HeadObjectCommand(params);
+    const s3Command = new GetObjectCommand(params);
     const s3Response = await s3.send(s3Command);
-    console.log('s3Response: ' + JSON.stringify(s3Response));
-    return s3Response.ContentType;
+
+    // https://docs.aws.amazon.com/AmazonS3/latest/userguide/example_s3_GetObject_section.html
+    // The Body object also has 'transformToByteArray' and 'transformToWebStream' methods.
+    const s3Data = await s3Response.Body.transformToString();
+    const s3Mail = await simpleParser(s3Data);
+
+    console.log('s3Data: ' + s3Data.length);
+    console.log('s3Mail: ' + s3Mail.subject);
   } catch (err) {
     console.log(err);
     const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;

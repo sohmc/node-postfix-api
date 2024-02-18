@@ -18,6 +18,7 @@
     "@aws-sdk/client-s3": "^3.514.0",
     "@aws-sdk/lib-dynamodb": "^3.454.0",
     "dotenv": "^16.3.1",
+    "mailparser": "^3.6.7",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
