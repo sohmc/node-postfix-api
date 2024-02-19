@@ -1,4 +1,5 @@
 import { execute as getAlias } from './newEndpoints/alias/GET';
+import { removeSubAddressExtension } from './newEndpoints/emailUtilities.js';
 
 /* Lambda must return a callback with one of these dispositions:
     - STOP_RULE—No further actions in the current receipt rule will be processed, but further receipt rules can be processed.
@@ -56,34 +57,6 @@ export const handler = (lambdaEvent, lambdaContext, callback) => {
     callback(null, { 'disposition': disposition });
   });
 };
-
-export function removeSubAddressExtension(emailAddress) {
-  console.log('ses.js:removeSubAddressExtension -- emailAddress: ' + emailAddress);
-  const allowedSeparators = ['+', '--', '#', '='];
-  let alias_address = '';
-  let domain = '';
-
-  const emailParts = emailAddress.split('@', 2);
-  if (emailParts.length == 2) {
-    alias_address = emailParts[0];
-    domain = emailParts[1];
-  }
-
-  if (emailParts.length >= 1) alias_address = emailParts[0];
-
-  // If separator was not found, then return the original email address
-  if (allowedSeparators.findIndex((i) => alias_address.indexOf(i) > -1) === -1) return emailAddress;
-  else console.log('ses.js:removeSubAddressExtension -- separator found');
-
-  // Build the address with only the localPart by removing everything to the right of each separator
-  let newLocalPart = alias_address;
-  allowedSeparators.forEach((separator) => {
-    newLocalPart = newLocalPart.split(separator)[0];
-  });
-
-  console.log('ses.js:removeSubAddressExtension -- newLocalPart: ' + newLocalPart);
-  return `${newLocalPart}@${domain}`;
-}
 
 async function isActiveEmail(emailAddress) {
   console.log('ses.js:isActiveEmail -- ' + JSON.stringify(emailAddress));
