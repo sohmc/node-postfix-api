@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { simpleParser } from 'mailparser';
 import { removeSubAddressExtension } from './newEndpoints/emailUtilities.js';
 import { execute as getAlias } from './newEndpoints/alias/GET.js';
@@ -52,8 +52,39 @@ export const handler = async (lambdaEvent) => {
     finalDelivery.push(deliveryLocation);
   }
 
+  if (finalDelivery.every((i) => i?.length > 0) >= 0) {
+    const deleteResponse = await deleteS3Object(bucket, key);
+    console.log('deleteResponse: ' + JSON.stringify(deleteResponse));
+  } else {
+    console.log('Final delivery was not consistently successful.  Output: ' + JSON.stringify(finalDelivery));
+    console.log('${key} not deleted from S3.');
+  }
+
   return finalDelivery;
 };
+
+async function deleteS3Object(bucket, key) {
+  const s3Params = {
+    Bucket: bucket,
+    Key: key,
+  };
+
+  let s3Response = null;
+  try {
+    console.log('params: ' + JSON.stringify(s3Params));
+
+    const s3Command = new DeleteObjectCommand(s3Params);
+    s3Response = await s3.send(s3Command);
+    if (!s3Response.DeleteMarker) throw 'S3 DeleteMarker set to FALSE';
+  } catch (err) {
+    console.log(err);
+    const message = `Error deleting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+    console.log(message);
+    throw new Error(message);
+  }
+
+  return s3Response;
+}
 
 async function deliverMail(destination, objectKey, emailContents) {
   let user = null;
@@ -80,7 +111,14 @@ async function deliverMail(destination, objectKey, emailContents) {
       writeFileSync(mailFile, emailContents);
       chownSync(mailFile, mailDirStats.uid, mailDirStats.gid);
 
-      return mailFile;
+      const mailFileStats = lstatSync(mailFile, { throwIfNoEntry: false });
+      console.log('mailFileStats: ' + JSON.stringify(mailDirStats));
+      if (mailFileStats.isFile() && (mailDirStats.uid == mailDirStats.uid) && (mailDirStats.size)) {
+        return mailFile;
+      } else {
+        console.log(`Unable to verify delivery for ${destination} in ${mailFile}.`);
+        return null;
+      }
     } else {
       console.log(`Unable to deliver to ${destination}.  Skipping.`);
       return null;
@@ -112,7 +150,9 @@ async function resolveAliases(aliasArray) {
     returnArray.push(...arrayResponse);
   }
 
-  return returnArray;
+  // Returns only unique destinations
+  const setArray = [ ...new Set(returnArray) ];
+  return setArray;
 }
 
 async function getDeliveryDestination(emailAddress) {
