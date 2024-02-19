@@ -2,7 +2,7 @@ import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { simpleParser } from 'mailparser';
 import { removeSubAddressExtension } from './newEndpoints/emailUtilities.js';
 import { execute as getAlias } from './newEndpoints/alias/GET.js';
-import { lstatSync, writeFileSync } from 'node:fs';
+import { lstatSync, writeFileSync, chownSync } from 'node:fs';
 
 const s3 = new S3Client({ region: 'us-east-1' });
 
@@ -78,6 +78,7 @@ async function deliverMail(destination, objectKey, emailContents) {
       const mailFile = `${mailDir}/${objectKey}`;
       console.log(`Delivering to ${mailFile}`);
       writeFileSync(mailFile, emailContents);
+      chownSync(mailFile, mailDirStats.uid, mailDirStats.gid);
 
       return mailFile;
     } else {
