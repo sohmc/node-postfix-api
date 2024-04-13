@@ -1,58 +1,67 @@
-const fs = require('fs');
-const parse = require('csv-parse');
+import { createReadStream } from 'node:fs';
+import { parse } from 'csv-parse';
 
-const { DynamoDBClient, PutItemCommand } = require('@aws-sdk/client-dynamodb');
-const AWS_REGION = 'us-east-1';
-const ddbClient = new DynamoDBClient({ region: AWS_REGION });
+const minAliasId = 51;
+const maxAliasId = 100;
 
+import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 // Configuration
 const DYNAMODB_TABLE_NAME = 'mailAliases-20230724';
+const AWS_REGION = 'us-east-1';
 
 // Define the name of your CSV file
-const csvFileName = 'mail_aliases.csv';
+const csvFileName = '/workspaces/node-postfix-api/src/mail_aliases.csv';
+
+
+const ddbClient = new DynamoDBClient({ region: AWS_REGION });
 
 // Create a parser to read the CSV file
-const parser = parse.parse({
+const parser = parse({
   columns: true,
   delimiter: ',',
 });
 
 // Read the CSV file and convert the data into DynamoDB JSON format
-fs.createReadStream(csvFileName)
+createReadStream(csvFileName)
   .pipe(parser)
   .on('data', async function(data) {
+    if ((data.alias_id < minAliasId) || (data.alias_id > maxAliasId)) return;
     // Define the put parameters
+    console.log(JSON.stringify(data));
     const params = {
       TableName: DYNAMODB_TABLE_NAME,
       Item: {
-        application: { S: data.application },
+        application: { S: data.application || 'tacomail' },
         identifier: { S: data.identifier },
         alias_address: { S: data.alias_address },
-        sub_domain: { S: data.sub_domain },
+        sub_domain: { S: data.subdomain },
         full_address: { S: data.full_address },
         destination: { S: data.destination },
         created_datetime: { N: mysqlDatetimeToUnixTime(data.created).toString() },
         modified_datetime: { N: mysqlDatetimeToUnixTime(data.modified).toString() },
-        active_alias: { 'BOOL': Boolean(data.active_alias) },
-        ignore_alias: { 'BOOL': Boolean(data.ignore_alias) },
+        active_alias: { 'BOOL': Boolean(parseInt(data.active_alias)) },
+        ignore_alias: { 'BOOL': Boolean(parseInt(data.ignore_alias)) },
         use_count: { N: data.use_count.toString() },
       },
-      ConditionExpression: 'attribute_not_exists(alias_address) AND attribute_not_exists(subdomain)',
+      // ConditionExpression: 'attribute_not_exists(alias_address) AND attribute_not_exists(sub_domain)',
     };
 
     console.log(JSON.stringify(params, null, 2));
     try {
       // Put the item to the DynamoDB table
-      const response = await ddbClient.send(new PutItemCommand(params));
+      const command = new PutItemCommand(params);
+      const response = await ddbClient.send(command);
       console.log(response);
       console.log('Successfully added item!');
     } catch (err) {
       console.error(`Error adding item: ${err.message}`);
+      console.error(`${err}`);
       console.error(JSON.stringify(err));
     }
   })
   .on('end', function() {
     console.log('CSV file processing completed.');
+    console.log(`minId: ${minAliasId} - maxId: ${maxAliasId}`);
   });
 
 
