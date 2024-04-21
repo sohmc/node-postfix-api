@@ -1,8 +1,8 @@
 import { createReadStream } from 'node:fs';
 import { parse } from 'csv-parse';
 
-const minAliasId = 51;
-const maxAliasId = 100;
+const minAliasId = 901;
+const maxAliasId = 1000;
 
 import { DynamoDBClient, PutItemCommand } from '@aws-sdk/client-dynamodb';
 // Configuration
@@ -27,7 +27,7 @@ createReadStream(csvFileName)
   .on('data', async function(data) {
     if ((data.alias_id < minAliasId) || (data.alias_id > maxAliasId)) return;
     // Define the put parameters
-    console.log(JSON.stringify(data));
+    // console.log(JSON.stringify(data));
     const params = {
       TableName: DYNAMODB_TABLE_NAME,
       Item: {
@@ -46,13 +46,14 @@ createReadStream(csvFileName)
       // ConditionExpression: 'attribute_not_exists(alias_address) AND attribute_not_exists(sub_domain)',
     };
 
-    console.log(JSON.stringify(params, null, 2));
+    // console.log(JSON.stringify(params, null, 2));
     try {
       // Put the item to the DynamoDB table
       const command = new PutItemCommand(params);
       const response = await ddbClient.send(command);
-      console.log(response);
-      console.log('Successfully added item!');
+      if (response['$metadata'].httpStatusCode != 200) {
+        console.log(response);
+      }
     } catch (err) {
       console.error(`Error adding item: ${err.message}`);
       console.error(`${err}`);
