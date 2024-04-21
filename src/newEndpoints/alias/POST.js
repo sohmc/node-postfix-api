@@ -72,7 +72,7 @@ export async function insertAliasObject(placeholderObject) {
       'created_datetime': placeholderObject.created || d,
       'modified_datetime': d,
       'active_alias': (Object.prototype.hasOwnProperty.call(placeholderObject, 'active') ? placeholderObject.active : true),
-      'ignore_alias': (Object.prototype.hasOwnProperty.call(placeholderObject, 'ignore_alias') ? placeholderObject.ignore_alias : true),
+      'ignore_alias': (Object.prototype.hasOwnProperty.call(placeholderObject, 'ignore_alias') ? placeholderObject.ignore_alias : false),
       'use_count': parseInt(placeholderObject.count) || 1,
     },
     'ExpressionAttributeNames': {

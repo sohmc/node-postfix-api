@@ -65,7 +65,7 @@ module.exports = {
           // Set key value for the index
           params.KeyConditionExpression = '#zz0 = :zz0';
           params.ExpressionAttributeNames['#zz0'] = 'application';
-          params.ExpressionAttributeValues[':zz0'] = 'postfix';
+          params.ExpressionAttributeValues[':zz0'] = 'tacomail';
 
           // Do a contains operation on full_address
           FilterExpressionArray.push(`contains(#${placeholderName}, :${placeholderName})`);
@@ -103,7 +103,7 @@ module.exports = {
         'sub_domain': placeholderObject.domain,
       },
       'Item': {
-        'application': 'postfix',
+        'application': 'tacomail',
         'sub_domain': placeholderObject.domain || 'foobar',
         'alias_address': placeholderObject.alias_address,
         'destination': placeholderObject.destination,

@@ -178,7 +178,7 @@ async function aliasQuery(placeholderObject) {
         // Set key value for the index
         params.KeyConditionExpression = '#zz0 = :zz0';
         params.ExpressionAttributeNames['#zz0'] = 'application';
-        params.ExpressionAttributeValues[':zz0'] = 'postfix';
+        params.ExpressionAttributeValues[':zz0'] = 'tacomail';
 
         // Do a contains operation on full_address
         FilterExpressionArray.push(`contains(#${placeholderName}, :${placeholderName})`);

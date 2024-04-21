@@ -4,7 +4,7 @@ ses.env
 *.zip
 instance-to-rds.sql
 migration_plan.md
-src/testing.js
 src/helper-scripts/
+src/tests/example-input/
 .ci/jest-coverage/
 *.csv

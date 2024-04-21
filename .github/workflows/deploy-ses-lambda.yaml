@@ -7,6 +7,8 @@ on:
     paths:
       - '**.js'
       - '.ci/**'
+      - 'package.json'
+      - 'package-lock.json'
       - '.github/workflows/aws-deploy.yaml'
       - '.github/workflows/deploy-api-lambda.yaml'
       - '!src/bable.config.js'
