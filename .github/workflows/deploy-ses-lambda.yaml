@@ -34,3 +34,4 @@ jobs:
     secrets: inherit
     with: 
       environment-name: production
+      lambda-handler: ses.export

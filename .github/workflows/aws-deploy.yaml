@@ -81,7 +81,7 @@ jobs:
     environment: ${{ inputs.environment-name }}
 
     env:
-      LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}-${{ inputs.environment-name }}
+      LAMBDA_FUNCTION_NAME: ${{ join([vars.LAMBDA_FUNCTION_NAME, inputs.environment-name], '-') }}
       LAMBDA_EXECUTION_ROLE: ${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}
       LAMBDA_RUNTIME: nodejs${{ matrix.node-version }}.x
       LAMBDA_HANDLER: ${{ inputs.lambda-handler }}
