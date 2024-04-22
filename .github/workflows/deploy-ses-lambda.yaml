@@ -29,9 +29,8 @@ jobs:
       lambda-handler: ses.export
 
   aws-deploy-ses-qa-prod:
-    if: startsWith(github.ref_name, 'qa-')
+    if: startsWith(github.ref_name, 'qa-ses')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
       environment-name: production
-      lambda-handler: ses.export
