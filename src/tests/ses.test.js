@@ -1,4 +1,5 @@
-import { handler, removeSubAddressExtension } from '../ses';
+import { handler } from '../ses.js';
+import { removeSubAddressExtension } from '../newEndpoints/emailUtilities.js';
 
 // https://jestjs.io/docs/asynchronous#callbacks
 test('Initial Encounter - Check if email exists', done => {
