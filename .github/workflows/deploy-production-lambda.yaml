@@ -1,0 +1,25 @@
+name: Deploy API Lambda
+on:
+  push:
+    tags:
+      - 'v*'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: 'src/'
+
+
+jobs:
+  aws-deploy-ses-production:
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: production-ses
+      lambda-handler: ses.export
+
+  aws-deploy-api-prod:
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: production

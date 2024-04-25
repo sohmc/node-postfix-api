@@ -1,0 +1,36 @@
+name: Deploy SES Lambda
+on:
+  push:
+    branches:
+      - 'dev-*'
+      - 'qa-*'
+    paths:
+      - '**.js'
+      - '.ci/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/aws-deploy.yaml'
+      - '.github/workflows/deploy-api-lambda.yaml'
+      - '!src/bable.config.js'
+      - '!index.js'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: 'src/'
+
+jobs:
+  aws-deploy-ses-dev:
+    if: startsWith(github.ref_name, 'dev-ses')
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: development-ses
+      lambda-handler: ses.export
+
+  aws-deploy-ses-qa-prod:
+    if: startsWith(github.ref_name, 'qa-ses')
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: production

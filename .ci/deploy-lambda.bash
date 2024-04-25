@@ -40,10 +40,27 @@ done
 
 # Set LAMBDA_RUNTIME if not set by other environment variables
 if [[ -z "$LAMBDA_RUNTIME" ]]; then
-  echo "Setting LAMBDA_RUNTIME to nodejs16.x"
-  LAMBDA_RUNTIME=nodejs16.x
+  echo "Setting LAMBDA_RUNTIME to nodejs18.x"
+  LAMBDA_RUNTIME=nodejs18.x
 else
   echo "LAMBDA_RUNTIME set to ${LAMBDA_RUNTIME}"
+fi
+
+# Attach VPC and Security Groups
+LAMBDA_VPC=''
+if [[ ! -z ${LAMBDA_SUBNETS+x} ]]; then
+  LAMBDA_VPC="SubnetIds=${LAMBDA_SUBNETS}"
+fi
+if [[ ! -z ${LAMBDA_SGS+x} ]]; then
+  LAMBDA_VPC="${LAMBDA_VPC},SecurityGroupIds=${LAMBDA_SGS}"
+fi
+if [[ ${LAMBDA_VPC} ]]; then
+  LAMBDA_VPC="--vpc-config ${LAMBDA_VPC}"
+fi
+
+# Lambda Handler
+if [[ -z ${LAMBDA_HANDLER+x} ]]; then
+  LAMBDA_HANDLER=index.handler
 fi
 
 
@@ -57,7 +74,7 @@ function createFunction {
     --timeout ${LAMBDA_TIMEOUT} \
     --memory-size ${LAMBDA_MEMORY_SIZE} \
     --architectures ${LAMBDA_ARCHITECTURE} \
-    --handler index.handler \
+    --handler ${LAMBDA_HANDLER} \
     --zip-file fileb://function.zip
 }
 
@@ -76,7 +93,7 @@ function createFunctionUrl {
     --function-name ${LAMBDA_FUNCTION_NAME} \
     --statement-id "FunctionURLAllowPublicAccess" \
     --action "lambda:InvokeFunctionUrl" \
-    --function-url-auth-type "NONE" \
+    --function-url-auth-type "AWS_IAM" \
     --principal "*"
 
   echo "Requesting a Function Url"
@@ -105,27 +122,17 @@ function updateFunctionMetadata {
     echo "Hello Github Actions Worflow: ${GITHUB_WORKFLOW}"
     GIT_SHA=$GITHUB_SHA
     BUILD_ID=${GITHUB_RUN_NUMBER}
+    LAMBDA_DESCRIPTION="Github Actions Build ID ${BUILD_ID} on commit ${GIT_SHA}"
   else
-    echo "Adding git SHA"
-    GIT_SHA=$(git rev-parse HEAD)
+    echo "Adding current branch name"
+    GIT_SHA=$(git rev-parse --abbrev-ref HEAD)
 
     echo "Setting BUILD_ID to local-build"
     BUILD_ID="local-build"
+    LAMBDA_DESCRIPTION="LOCAL-BUILD off branch ${GIT_SHA}"
   fi
 
   LAMBDA_ENV_VARS=${LAMBDA_ENV_VARS},SHA=${GIT_SHA},BUILD_ID=${BUILD_ID}
-
-  # Attach VPC and Security Groups
-  LAMBDA_VPC=''
-  if [[ ! -z ${LAMBDA_SUBNETS+x} ]]; then
-    LAMBDA_VPC="SubnetIds=${LAMBDA_SUBNETS}"
-  fi
-  if [[ ! -z ${LAMBDA_SGS+x} ]]; then
-    LAMBDA_VPC="${LAMBDA_VPC},SecurityGroupIds=${LAMBDAA_SGS}"
-  fi
-  if [[ ! -z ${LAMBDA_VPC} ]]; then
-    LAMBDA_VPC="--vpc-config ${LAMBDA_VPC}"
-  fi
 
   echo "Updating Lambda Function's Metadata..."
   aws lambda update-function-configuration \
@@ -134,6 +141,8 @@ function updateFunctionMetadata {
     --role ${LAMBDA_EXECUTION_ROLE} \
     --timeout ${LAMBDA_TIMEOUT} \
     --memory-size ${LAMBDA_MEMORY_SIZE} \
+    --description "${LAMBDA_DESCRIPTION}" \
+    ${LAMBDA_VPC} \
     --environment Variables={${LAMBDA_ENV_VARS}}
 }
 

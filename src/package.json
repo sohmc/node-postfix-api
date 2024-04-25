@@ -1,17 +1,32 @@
 {
-  "name": "postfix-lambda-api",
+  "name": "tacomail-lambda-api",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "predeploy": "rm function.zip ; zip -r function.zip ./*",
-    "deploy": "bash ../.ci/deploy-lambda.bash",
-    "deploy-ses": "npm run predeploy && bash ../.ci/deploy-lambda.bash update ../.ci/ses.env",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "zip": "rm function.zip ; zip -r function.zip ./*",
+    "deploy-lambda": "bash -xe ../.ci/deploy-lambda.bash",
+    "deploy-ses": "bash -xe ../.ci/deploy-lambda.bash update ../.ci/ses.env",
+    "deploy-s3handler": "bash -xe ../.ci/deploy-lambda.bash update ../.ci/s3handler.env",
+    "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest"
   },
   "author": "",
   "license": "AGPL-3.0",
+  "type": "module",
   "description": "",
   "dependencies": {
-    "mysql2": "^2.3.3"
+    "@aws-sdk/client-dynamodb": "^3.454.0",
+    "@aws-sdk/client-s3": "^3.514.0",
+    "@aws-sdk/lib-dynamodb": "^3.454.0",
+    "dotenv": "^16.3.1",
+    "mailparser": "^3.6.7",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@babel/preset-env": "^7.23.6",
+    "babel-jest": "^29.7.0",
+    "csv": "^6.3.5",
+    "csv-parse": "^5.5.2",
+    "eslint-plugin-jest": "^27.6.0",
+    "jest": "^29.7.0"
   }
 }

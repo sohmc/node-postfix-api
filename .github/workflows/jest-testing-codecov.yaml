@@ -1,0 +1,67 @@
+name: Node Build and Test
+on:
+  pull_request:
+    branches:
+      - 'main'
+    paths:
+      - '**.js'
+  push:
+    branches:
+      - 'main'
+      - 'test-*'
+
+defaults:
+  run:
+    shell: bash
+    working-directory: 'src/'
+
+jobs:
+  npm-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20]
+  
+    permissions:
+      id-token: write
+      contents: read
+
+    name: Node ${{ matrix.node-version }} test
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          cache-dependency-path: '**/package-lock.json'
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
+        name: List the state of node modules
+        continue-on-error: true
+        run: npm list
+
+      - name: Run npm install (include development packages for testing)
+        run: npm install
+      
+
+      # https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          role-duration-seconds: 900 # minimum is 15 minutes
+          mask-aws-account-id: true
+
+      - name: Run coverage tests
+        run: npm test
+        env:
+          POSTFIX_DYNAMODB_TABLE: ${{ secrets.POSTFIX_DYNAMODB_TABLE }}
+      
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      

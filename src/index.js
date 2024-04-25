@@ -1,7 +1,12 @@
-const fs = require('node:fs');
-const path = require('node:path');
+import { fileURLToPath } from 'node:url';
+import { readdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
 
-exports.handler = async (lambdaEvent, lambdaContext) => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+
+export const handler = async (lambdaEvent, lambdaContext) => {
   console.log('handler event: ' + JSON.stringify(lambdaEvent));
   console.log('handler context: ' + JSON.stringify(lambdaContext));
 
@@ -18,35 +23,38 @@ exports.handler = async (lambdaEvent, lambdaContext) => {
 
     // Get rid of the empty first element that exists after the split.
     const pathParameters = requestContext.http.path.split('/').slice(1);
+    const method = requestContext.http.method;
     const endpoint = pathParameters.shift();
-    console.log(`Requested Endpoint: ${endpoint}`);
-    const endpointFunction = loadEndpoint(endpoint);
 
-    const queryStringParameters = lambdaEvent.queryStringParameters || {};
+    console.log(`Requested Endpoint: ${method} ${endpoint}`);
+    const endpointFunction = await loadEndpoint(method, endpoint);
+
+    const queryStringParameters = { ...lambdaEvent.queryStringParameters } || {};
     const requestBody = JSON.parse(lambdaEvent.body || '{}');
 
-    if (Object.prototype.hasOwnProperty.call(endpointFunction, 'metadata') &&
-      (endpointFunction.metadata.supportedMethods.indexOf(requestContext.http.method) >= 0)) {
-      lambdaResponseObject = await endpointFunction.execute(requestContext.http.method, pathParameters, queryStringParameters, requestBody, lambdaEvent, lambdaContext);
+    if (Object.prototype.hasOwnProperty.call(endpointFunction, 'execute')) {
+      lambdaResponseObject = await endpointFunction.execute(pathParameters, queryStringParameters, requestBody, lambdaEvent, lambdaContext);
+    } else {
+      lambdaResponseObject.statusCode = 400;
+      lambdaResponseObject.body = '{"message": "Bad Request"}';
     }
   }
-
 
   return lambdaResponseObject;
 };
 
-function loadEndpoint(targetEndpoint) {
-  const endpointModulesPath = path.join(__dirname + '/endpoints');
-  const commandFilename = targetEndpoint + '.js';
-  const endpointFiles = fs.readdirSync(endpointModulesPath).filter(file => file.toLowerCase() === commandFilename.toLowerCase() && file != 'index.js');
+async function loadEndpoint(method, targetEndpoint) {
+  const endpointModulesPath = join(__dirname + '/newEndpoints/' + targetEndpoint);
+  const commandFilename = method + '.js';
+  const endpointFiles = readdirSync(endpointModulesPath).filter(file => file.toLowerCase() === commandFilename.toLowerCase() && file != 'index.js');
 
   if (endpointFiles.length == 0) return {};
 
-  const filePath = path.join(endpointModulesPath, endpointFiles[0]);
+  const filePath = join(endpointModulesPath, endpointFiles[0]);
   console.log('Loading: ' + filePath);
-  const endpointModule = require(filePath);
+  const endpointModule = await import(filePath);
 
-  console.log('Loaded: ' + endpointModule.metadata.endpoint + ': (TYPE: ' + endpointModule.metadata.supportedMethods + ') ' + endpointModule.metadata.description);
+  // console.log('Loaded: ' + endpointModule.metadata.endpoint + ': (TYPE: ' + endpointModule.metadata.supportedMethods + ') ' + endpointModule.metadata.description);
 
   return endpointModule;
 }
