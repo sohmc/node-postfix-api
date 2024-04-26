@@ -61,7 +61,7 @@ jobs:
         run: npm run zip
 
       - name: Upload Zip File for Downstream Use
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: function.zip
           path: ${{ github.workspace }}/src/function.zip
