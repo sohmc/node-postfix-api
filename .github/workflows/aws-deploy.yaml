@@ -2,7 +2,7 @@ name: Workflow - Build and Deploy Lambda to AWS
 on:
   workflow_call:
     inputs:
-      environment-name:
+      function-name:
         required: true
         type: string
       lambda-handler:
@@ -17,11 +17,11 @@ defaults:
 jobs:
   npm-build-deploy:
     runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.artifact-upload-name.outputs.artifact-name }}
     strategy:
       matrix:
         node-version: [20]
-    
-    environment: ${{ inputs.environment-name }}
 
     name: Node ${{ matrix.node-version }} build and deploy
     steps:
@@ -59,11 +59,18 @@ jobs:
 
       - name: zip up the folder
         run: npm run zip
+      
+      - name: Artifact Upload Name
+        id: artifact-upload-name
+        run: |
+          ArtifactName=function-${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
+          echo "artifact-name: ${ArtifactName}"
+          echo "artifact-name=$ArtifactName" >> $GITHUB_OUTPUT
 
       - name: Upload Zip File for Downstream Use
         uses: actions/upload-artifact@v4
         with:
-          name: function-${{ inputs.environment-name }}-${{ inputs.lambda-handler }}.zip
+          name: ${{ steps.artifact-upload-name.outputs.artifact-name }}
           path: ${{ github.workspace }}/src/function.zip
           retention-days: 7
           if-no-files-found: error
@@ -78,10 +85,8 @@ jobs:
       matrix:
         node-version: [20]
 
-    environment: ${{ inputs.environment-name }}
-
     env:
-      LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}-${{ inputs.environment-name }}
+      LAMBDA_FUNCTION_NAME: ${{ inputs.function-name }}
       LAMBDA_EXECUTION_ROLE: ${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}
       LAMBDA_RUNTIME: nodejs${{ matrix.node-version }}.x
       LAMBDA_HANDLER: ${{ inputs.lambda-handler }}
@@ -90,7 +95,7 @@ jobs:
       id-token: write
       contents: read
 
-    name: Deploy to AWS - ${{ inputs.environment-name }} - nodejs ${{ matrix.node-version }} - lambda handler ${{ inputs.lambda-handler }}
+    name: Deploy to AWS - nodejs ${{ matrix.node-version }} - function ${{ inputs.function-name }} - handler ${{ inputs.lambda-handler }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -99,7 +104,7 @@ jobs:
         uses: actions/download-artifact@v4
         id: download-artifact
         with:
-          name: function-${{ inputs.environment-name }}-${{ inputs.lambda-handler }}.zip
+          name: ${{ needs.npm-build-deploy.outputs.artifact-name }}
           path: ${{ github.workspace }}/src
       
       - name: List ZIP contents

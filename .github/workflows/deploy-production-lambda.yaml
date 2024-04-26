@@ -11,23 +11,23 @@ defaults:
 
 
 jobs:
-  aws-deploy-ses-production:
-    uses: ./.github/workflows/aws-deploy.yaml
-    secrets: inherit
-    with: 
-      environment-name: production-ses
-      lambda-handler: ses.export
-
   aws-deploy-api-prod:
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      environment-name: production
+      function-name: tacomail-api-production
       lambda-handler: index.handler
+
+  aws-deploy-ses-production:
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      function-name: tacomail-ses-handler-production
+      lambda-handler: ses.export
 
   aws-deploy-s3-handler-prod:
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      environment-name: production
+      function-name: tacomail-s3-handler-production
       lambda-handler: s3handler.handler
