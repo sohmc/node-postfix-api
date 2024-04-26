@@ -1,4 +1,5 @@
-name: DISABLED - Deploy API Lambda
+# Deploys the API Lambda
+name: DEV QA -- Deploy API Lambda
 on:
   push:
     branches:
@@ -12,7 +13,9 @@ on:
       - '.github/workflows/aws-deploy.yaml'
       - '.github/workflows/deploy-api-lambda.yaml'
       - '!src/bable.config.js'
-      - '!ses.js'
+      - '!src/s3handlers.js'
+      - '!src/ses.js'
+
 
 defaults:
   run:
@@ -26,11 +29,14 @@ jobs:
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      environment-name: development
+      function-name: tacomail-api-dev-${{ github.ref_name }}
+      lambda-handler: index.handler
 
-  aws-deploy-api-qa-prod:
-    if: startsWith(github.ref_name, 'qa-') || startsWith(github.ref_name, 'qa-')
+  aws-deploy-api-qa:
+    if: startsWith(github.ref_name, 'qa-')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      environment-name: production
+      function-name: tacomail-api-qa-${{ github.ref_name }}
+      lambda-handler: index.handler
+    

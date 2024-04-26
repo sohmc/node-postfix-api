@@ -22,7 +22,7 @@ defaults:
 
 jobs:
   aws-deploy-ses-dev:
-    if: startsWith(github.ref_name, 'dev-ses')
+    if: startsWith(github.ref_name, 'dev-s3')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
@@ -30,7 +30,7 @@ jobs:
       lambda-handler: s3handler.handler
 
   aws-deploy-ses-qa-prod:
-    if: startsWith(github.ref_name, 'qa-ses')
+    if: startsWith(github.ref_name, 'qa-s3')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
