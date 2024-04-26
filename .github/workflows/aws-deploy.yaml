@@ -1,4 +1,4 @@
-name: Deploy Lambda to AWS
+name: Workflow - Deploy Lambda to AWS
 on:
   workflow_call:
     inputs:
@@ -90,7 +90,7 @@ jobs:
       id-token: write
       contents: read
 
-    name: Deploy to AWS - ${{ inputs.environment-name }} - nodejs ${{ matrix.node-version }} 
+    name: Deploy to AWS - ${{ inputs.environment-name }} - nodejs ${{ matrix.node-version }} - lambda handler ${{ inputs.lambda-handler }}
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
