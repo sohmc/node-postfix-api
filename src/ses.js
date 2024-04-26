@@ -1,4 +1,4 @@
-import { execute as getAlias } from './newEndpoints/alias/GET';
+import { execute as getAlias } from './newEndpoints/alias/GET.js';
 import { removeSubAddressExtension } from './newEndpoints/emailUtilities.js';
 
 /* Lambda must return a callback with one of these dispositions:
