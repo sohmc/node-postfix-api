@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18]
+        node-version: [20]
     
     environment: ${{ inputs.environment-name }}
 
@@ -76,12 +76,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18]
+        node-version: [20]
 
     environment: ${{ inputs.environment-name }}
 
     env:
-      LAMBDA_FUNCTION_NAME: ${{ join([vars.LAMBDA_FUNCTION_NAME, inputs.environment-name], '-') }}
+      LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}-${{ inputs.environment-name }}
       LAMBDA_EXECUTION_ROLE: ${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}
       LAMBDA_RUNTIME: nodejs${{ matrix.node-version }}.x
       LAMBDA_HANDLER: ${{ inputs.lambda-handler }}
