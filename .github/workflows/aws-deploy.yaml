@@ -63,7 +63,7 @@ jobs:
       - name: Upload Zip File for Downstream Use
         uses: actions/upload-artifact@v4
         with:
-          name: function.zip
+          name: function-${{ inputs.environment-name }}-${{ inputs.lambda-handler }}.zip
           path: ${{ github.workspace }}/src/function.zip
           retention-days: 7
           if-no-files-found: error
@@ -99,7 +99,7 @@ jobs:
         uses: actions/download-artifact@v4
         id: download-artifact
         with:
-          name: function.zip
+          name: function-${{ inputs.environment-name }}-${{ inputs.lambda-handler }}.zip
           path: ${{ github.workspace }}/src
       
       - name: List ZIP contents
