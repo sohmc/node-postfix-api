@@ -1,0 +1,19 @@
+name: Testing
+on:
+  push:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Artifact Upload Name
+        id: artifact-upload-name
+        run: |
+          ArtifactName=function-${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
+          echo "artifact-name: ${ArtifactName}"
+          echo "artifact-name=$ArtifactName" >> $GITHUB_OUTPUT
+
