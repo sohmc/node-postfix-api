@@ -24,3 +24,10 @@ jobs:
     with: 
       environment-name: production
       lambda-handler: index.handler
+
+  aws-deploy-s3-handler-prod:
+    uses: ./.github/workflows/aws-deploy.yaml
+    secrets: inherit
+    with: 
+      environment-name: production
+      lambda-handler: s3handler.handler
