@@ -1,4 +1,4 @@
-name: Deploy API Lambda
+name: DISABLED - Deploy API Lambda
 on:
   push:
     branches:

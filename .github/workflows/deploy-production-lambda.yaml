@@ -1,4 +1,4 @@
-name: Deploy API Lambda
+name: PROD - Deploy Lambdas
 on:
   push:
     tags:

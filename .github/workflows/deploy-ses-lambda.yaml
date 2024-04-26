@@ -1,4 +1,4 @@
-name: Deploy SES Lambda
+name: DEV QA -- Deploy SES Lambda
 on:
   push:
     branches:
