@@ -6,7 +6,7 @@ on:
         required: true
         type: string
       lambda-handler:
-        required: false
+        required: true
         type: string
 
 defaults:
@@ -63,9 +63,11 @@ jobs:
       - name: Artifact Upload Name
         id: artifact-upload-name
         run: |
-          ArtifactName=function-${GITHUB_RUN_ID}-${GITHUB_RUN_NUMBER}
+          ArtifactName=function-${FUNCTION}
           echo "artifact-name: ${ArtifactName}"
           echo "artifact-name=$ArtifactName" >> $GITHUB_OUTPUT
+        env:
+          FUNCTION: ${{ inputs.function-name }}-${{ inputs.lambda-handler }}
 
       - name: Upload Zip File for Downstream Use
         uses: actions/upload-artifact@v4
