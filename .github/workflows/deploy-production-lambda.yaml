@@ -23,7 +23,7 @@ jobs:
     secrets: inherit
     with: 
       function-name: tacomail-ses-handler-production
-      lambda-handler: ses.export
+      lambda-handler: ses.handler
 
   aws-deploy-s3-handler-prod:
     uses: ./.github/workflows/aws-deploy.yaml
