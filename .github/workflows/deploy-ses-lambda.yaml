@@ -27,7 +27,7 @@ jobs:
     secrets: inherit
     with: 
       function-name: tacomail-ses-handler-dev-${{ github.ref_name }}
-      lambda-handler: ses.export
+      lambda-handler: ses.handler
 
   aws-deploy-ses-qa-prod:
     if: startsWith(github.ref_name, 'qa-ses')
@@ -35,4 +35,4 @@ jobs:
     secrets: inherit
     with: 
       function-name: tacomail-ses-handler-qa-${{ github.ref_name }}
-      lambda-handler: ses.export
+      lambda-handler: ses.handler
