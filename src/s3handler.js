@@ -94,11 +94,12 @@ async function deleteS3Object(bucket, key) {
 }
 
 async function deliverMail(destination, objectKey, emailContents) {
+  console.log(`Attempting to deliver to ${destination}`);
   let user = null;
 
   if ((destination.endsWith('@tacomail')) || (destination.endsWith('@husker.mikesoh.com'))) {
     const destinationParts = destination.split('@');
-    if (destinationParts.length > 1) user = destination[0];
+    if (destinationParts.length > 1) user = destinationParts[0];
   } else if (destination.includes('@')) {
     console.log(`Email Forwarding to ${destination} not yet supported`);
   } else if (destination == 'S3') {
@@ -109,6 +110,7 @@ async function deliverMail(destination, objectKey, emailContents) {
   }
 
   if (user) {
+    console.log(`user set: ${user}`);
     const mailDir = `/mnt/Maildir/${user}`;
     const mailDirStats = lstatSync(`${mailDir}/`, { throwIfNoEntry: false });
 
