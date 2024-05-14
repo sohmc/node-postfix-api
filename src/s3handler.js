@@ -166,8 +166,9 @@ async function resolveAliases(aliasArray) {
 }
 
 async function getDeliveryDestination(emailAddress) {
-  console.log('s3handler.js:getDeliveryDestination -- ' + JSON.stringify(emailAddress));
-  const apiResponse = await getAlias([], { 'alias': emailAddress });
+  const lowercaseEmail = emailAddress.toLowerCase();
+  console.log('s3handler.js:getDeliveryDestination -- ' + JSON.stringify(lowercaseEmail));
+  const apiResponse = await getAlias([], { 'alias': lowercaseEmail });
 
   // Response Code 405 = Alias does not Exist
   if (apiResponse?.code == 405) return [];

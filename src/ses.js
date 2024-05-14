@@ -19,7 +19,7 @@ export const handler = (lambdaEvent, lambdaContext, callback) => {
     console.log('Destination: ' + mailRecord.destination);
 
     for (const destinationRecord of mailRecord.destination) {
-      const email = removeSubAddressExtension(destinationRecord);
+      const email = removeSubAddressExtension(destinationRecord).toLowerCase();
       console.log('destination: ' + destinationRecord + ' -- email: ' + email);
 
       // X-Postfix-Check-2 means that the first rule has processed and completed with STOP_RULE (i.e. The alias exists)
