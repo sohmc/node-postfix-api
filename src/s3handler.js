@@ -101,7 +101,8 @@ async function deliverMail(destination, objectKey, emailContents) {
     const destinationParts = destination.split('@');
     if (destinationParts.length > 1) user = destinationParts[0];
   } else if (destination.includes('@')) {
-    console.log(`Email Forwarding to ${destination} not yet supported`);
+    console.log(`Email Forwarding to ${destination} not yet supported.  For now, sending to S3`);
+    user = 'mike';
   } else if (destination == 'S3') {
     user = 'mike';
   } else {
