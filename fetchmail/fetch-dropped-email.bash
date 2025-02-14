@@ -15,7 +15,7 @@ MAILDROP="/usr/bin/maildrop"
 # for each object in the bucket...
 for F in ${SES_DELIVERY_DIR}/*; do
   DATETIME=$(date --rfc-3339=seconds)
-  if [ "${F}" == "AMAZON_SES_SETUP_NOTIFICATION" ]; then
+  if [ "${F}" == "AMAZON_SES_SETUP_NOTIFICATION" ] || [ ! -f "${F}" ]; then
     continue # ignore this object SES creates during set-up
   fi
 
