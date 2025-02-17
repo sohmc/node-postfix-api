@@ -15,10 +15,10 @@ export const handler = (lambdaEvent, lambdaContext, callback) => {
   if (Object.prototype.hasOwnProperty.call(lambdaEvent, 'Records') && (lambdaEvent.Records.length === 1)) {
     const sesRecord = lambdaEvent.Records[0];
     const mailRecord = sesRecord.ses.mail;
+    const mailDestinations = [ ...mailRecord.destination, ...(sesRecord.ses?.receipt?.recipients.length > 0 ? sesRecord.ses.receipt.recipients : []) ];
 
-    console.log('Destination: ' + mailRecord.destination);
-
-    for (const destinationRecord of mailRecord.destination) {
+    console.log('mailDestinations: ' + mailDestinations);
+    for (const destinationRecord of mailDestinations) {
       const email = removeSubAddressExtension(destinationRecord).toLowerCase();
       console.log('destination: ' + destinationRecord + ' -- email: ' + email);
 
