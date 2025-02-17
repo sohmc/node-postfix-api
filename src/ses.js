@@ -15,7 +15,7 @@ export const handler = (lambdaEvent, lambdaContext, callback) => {
   if (Object.prototype.hasOwnProperty.call(lambdaEvent, 'Records') && (lambdaEvent.Records.length === 1)) {
     const sesRecord = lambdaEvent.Records[0];
     const mailRecord = sesRecord.ses.mail;
-    const mailDestinations = [ ...mailRecord.destination, ...sesRecord.ses.receipt.recipients ];
+    const mailDestinations = [ ...mailRecord.destination, ...sesRecord.ses?.receipt?.recipients ];
 
     console.log('mailDestinations: ' + mailDestinations);
     for (const destinationRecord of mailDestinations) {
