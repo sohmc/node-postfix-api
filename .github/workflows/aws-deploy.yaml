@@ -125,12 +125,20 @@ jobs:
         continue-on-error: true
         run: bash -ex ../.ci/deploy-lambda.bash
       
+      - name: Waiting 60 seconds for Lambda to Update
+        uses: GuillaumeFalourd/wait-sleep-action@v1
+        with:
+          time: '60s'
+
       - name: Get Lambda Status
+        id: get-lambda-status
         run: |
-          aws lambda get-function-configuration \
-            --function-name ${LAMBDA_FUNCTION_NAME}
+          LAMBDA_CONFIG=`aws lambda get-function-configuration \
+            --function-name ${LAMBDA_FUNCTION_NAME}`
+          echo "lambda-config=$LAMBDA_CONFIG" >> $GITHUB_OUTPUT
 
       - name: Update Lambda function Metadata
+        if: contains(fromJSON(steps.get-lambda-status.outputs.lambda-config).LastUpdateStatus, 'Successful')
         run: bash -ex ../.ci/deploy-lambda.bash update-metadata
         env:
           LAMBDA_ENV_VARS: POSTFIX_DYNAMODB_TABLE=${{ secrets.POSTFIX_DYNAMODB_TABLE }}
