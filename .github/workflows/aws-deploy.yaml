@@ -1,12 +1,12 @@
-name: Deploy Lambda to AWS
+name: Workflow - Build and Deploy Lambda to AWS
 on:
   workflow_call:
     inputs:
-      environment-name:
+      function-name:
         required: true
         type: string
       lambda-handler:
-        required: false
+        required: true
         type: string
 
 defaults:
@@ -17,11 +17,11 @@ defaults:
 jobs:
   npm-build-deploy:
     runs-on: ubuntu-latest
+    outputs:
+      artifact-name: ${{ steps.artifact-upload-name.outputs.artifact-name }}
     strategy:
       matrix:
-        node-version: [18]
-    
-    environment: ${{ inputs.environment-name }}
+        node-version: [20]
 
     name: Node ${{ matrix.node-version }} build and deploy
     steps:
@@ -37,7 +37,7 @@ jobs:
 
       - name: Cache node modules
         id: cache-npm
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         env:
           cache-name: cache-node-modules
         with:
@@ -59,11 +59,20 @@ jobs:
 
       - name: zip up the folder
         run: npm run zip
+      
+      - name: Artifact Upload Name
+        id: artifact-upload-name
+        run: |
+          ArtifactName=function-${FUNCTION}
+          echo "artifact-name: ${ArtifactName}"
+          echo "artifact-name=$ArtifactName" >> $GITHUB_OUTPUT
+        env:
+          FUNCTION: ${{ inputs.function-name }}-${{ inputs.lambda-handler }}
 
       - name: Upload Zip File for Downstream Use
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: function.zip
+          name: ${{ steps.artifact-upload-name.outputs.artifact-name }}
           path: ${{ github.workspace }}/src/function.zip
           retention-days: 7
           if-no-files-found: error
@@ -76,12 +85,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18]
-
-    environment: ${{ inputs.environment-name }}
+        node-version: [20]
 
     env:
-      LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}-${{ inputs.environment-name }}
+      LAMBDA_FUNCTION_NAME: ${{ inputs.function-name }}
       LAMBDA_EXECUTION_ROLE: ${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}
       LAMBDA_RUNTIME: nodejs${{ matrix.node-version }}.x
       LAMBDA_HANDLER: ${{ inputs.lambda-handler }}
@@ -90,16 +97,16 @@ jobs:
       id-token: write
       contents: read
 
-    name: Deploy to AWS - ${{ inputs.environment-name }} - nodejs ${{ matrix.node-version }} 
+    name: Deploy to AWS - nodejs ${{ matrix.node-version }} - function ${{ inputs.function-name }} - handler ${{ inputs.lambda-handler }}
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download a single artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         id: download-artifact
         with:
-          name: function.zip
+          name: ${{ needs.npm-build-deploy.outputs.artifact-name }}
           path: ${{ github.workspace }}/src
       
       - name: List ZIP contents

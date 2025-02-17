@@ -1,5 +1,4 @@
-# Deploys the API Lambda
-name: DEV QA -- Deploy API Lambda
+name: DEV QA -- Deploy S3 Lambda
 on:
   push:
     branches:
@@ -11,32 +10,29 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/aws-deploy.yaml'
-      - '.github/workflows/deploy-api-lambda.yaml'
+      - '.github/workflows/deploy-s3-lambda.yaml'
       - '!src/bable.config.js'
-      - '!src/s3handlers.js'
+      - '!src/index.js'
       - '!src/ses.js'
-
 
 defaults:
   run:
     shell: bash
     working-directory: 'src/'
 
-
 jobs:
-  aws-deploy-api-dev:
-    if: startsWith(github.ref_name, 'dev-')
+  aws-deploy-ses-dev:
+    if: startsWith(github.ref_name, 'dev-s3')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      function-name: tacomail-api-dev-${{ github.ref_name }}
-      lambda-handler: index.handler
+      function-name: tacomail-s3-handler-dev-${{ github.ref_name }}
+      lambda-handler: s3handler.handler
 
-  aws-deploy-api-qa:
-    if: startsWith(github.ref_name, 'qa-')
+  aws-deploy-ses-qa-prod:
+    if: startsWith(github.ref_name, 'qa-s3')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      function-name: tacomail-api-qa-${{ github.ref_name }}
-      lambda-handler: index.handler
-    
+      function-name: tacomail-s3-handler-qa-${{ github.ref_name }}
+      lambda-handler: s3handler.handler

@@ -1,4 +1,4 @@
-name: Deploy SES Lambda
+name: DEV QA -- Deploy SES Lambda
 on:
   push:
     branches:
@@ -10,9 +10,10 @@ on:
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/aws-deploy.yaml'
-      - '.github/workflows/deploy-api-lambda.yaml'
+      - '.github/workflows/deploy-ses-lambda.yaml'
       - '!src/bable.config.js'
-      - '!index.js'
+      - '!src/index.js'
+      - '!src/s3handler.js'
 
 defaults:
   run:
@@ -25,12 +26,13 @@ jobs:
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      environment-name: development-ses
-      lambda-handler: ses.export
+      function-name: tacomail-ses-handler-dev-${{ github.ref_name }}
+      lambda-handler: ses.handler
 
   aws-deploy-ses-qa-prod:
-    if: startsWith(github.ref_name, 'qa-')
+    if: startsWith(github.ref_name, 'qa-ses')
     uses: ./.github/workflows/aws-deploy.yaml
     secrets: inherit
     with: 
-      environment-name: production
+      function-name: tacomail-ses-handler-qa-${{ github.ref_name }}
+      lambda-handler: ses.handler

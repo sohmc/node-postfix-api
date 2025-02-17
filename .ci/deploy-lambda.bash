@@ -40,8 +40,8 @@ done
 
 # Set LAMBDA_RUNTIME if not set by other environment variables
 if [[ -z "$LAMBDA_RUNTIME" ]]; then
-  echo "Setting LAMBDA_RUNTIME to nodejs18.x"
-  LAMBDA_RUNTIME=nodejs18.x
+  echo "Setting LAMBDA_RUNTIME to nodejs20.x"
+  LAMBDA_RUNTIME=nodejs20.x
 else
   echo "LAMBDA_RUNTIME set to ${LAMBDA_RUNTIME}"
 fi
@@ -60,6 +60,7 @@ fi
 
 # Lambda Handler
 if [[ -z ${LAMBDA_HANDLER+x} ]]; then
+  echo "Setting LAMBDA_HANDLER to index.handler"
   LAMBDA_HANDLER=index.handler
 fi
 

@@ -2,7 +2,7 @@ import { S3Client, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import { simpleParser } from 'mailparser';
 import { removeSubAddressExtension } from './newEndpoints/emailUtilities.js';
 import { execute as getAlias } from './newEndpoints/alias/GET.js';
-import { lstatSync, writeFileSync, chownSync } from 'node:fs';
+import { lstatSync, readdirSync, writeFileSync, chownSync } from 'node:fs';
 
 const s3 = new S3Client({ region: 'us-east-1' });
 
@@ -15,6 +15,9 @@ export const handler = async (lambdaEvent) => {
     Bucket: bucket,
     Key: key,
   };
+
+  // Do not process the SES Setup File
+  if (key == 'AMAZON_SES_SETUP_NOTIFICATION') return false;
 
   let s3Response = null;
   try {
@@ -43,24 +46,28 @@ export const handler = async (lambdaEvent) => {
   const resolvedDestinations = await resolveAliases(destinations);
   console.log('resolvedDestinations: ' + JSON.stringify(resolvedDestinations));
 
-
-  const finalDelivery = [];
-  for (let x = 0; x < resolvedDestinations.length; x++) {
-    const i = resolvedDestinations[x];
-    const deliveryLocation = await deliverMail(i, key, s3Data);
-    console.log('deliveryLocation: ' + deliveryLocation);
-    finalDelivery.push(deliveryLocation);
-  }
-
-  if (finalDelivery.every((i) => i?.length > 0) >= 0) {
-    const deleteResponse = await deleteS3Object(bucket, key);
-    console.log('deleteResponse: ' + JSON.stringify(deleteResponse));
+  if (resolvedDestinations.length == 0) {
+    console.log('No destinations defined.  Email will not be processed and will remain in S3.');
+    return false;
   } else {
-    console.log('Final delivery was not consistently successful.  Output: ' + JSON.stringify(finalDelivery));
-    console.log('${key} not deleted from S3.');
-  }
+    const finalDelivery = [];
+    for (let x = 0; x < resolvedDestinations.length; x++) {
+      const i = resolvedDestinations[x];
+      const deliveryLocation = await deliverMail(i, key, s3Data);
+      console.log('deliveryLocation: ' + deliveryLocation);
+      finalDelivery.push(deliveryLocation);
+    }
 
-  return finalDelivery;
+    if (finalDelivery.every((i) => i != null)) {
+      const deleteResponse = await deleteS3Object(bucket, key);
+      console.log('deleteResponse: ' + JSON.stringify(deleteResponse));
+    } else {
+      console.log('Final delivery was not consistently successful.  Output: ' + JSON.stringify(finalDelivery));
+      console.log('${key} not deleted from S3.');
+    }
+
+    return finalDelivery;
+  }
 };
 
 async function deleteS3Object(bucket, key) {
@@ -87,13 +94,15 @@ async function deleteS3Object(bucket, key) {
 }
 
 async function deliverMail(destination, objectKey, emailContents) {
+  console.log(`Attempting to deliver to ${destination}`);
   let user = null;
 
   if ((destination.endsWith('@tacomail')) || (destination.endsWith('@husker.mikesoh.com'))) {
     const destinationParts = destination.split('@');
-    if (destinationParts.length > 1) user = destination[0];
+    if (destinationParts.length > 1) user = destinationParts[0];
   } else if (destination.includes('@')) {
-    console.log(`Email Forwarding to ${destination} not yet supported`);
+    console.log(`Email Forwarding to ${destination} not yet supported.  For now, sending to S3`);
+    user = 'mike';
   } else if (destination == 'S3') {
     user = 'mike';
   } else {
@@ -102,10 +111,11 @@ async function deliverMail(destination, objectKey, emailContents) {
   }
 
   if (user) {
+    console.log(`user set: ${user}`);
     const mailDir = `/mnt/Maildir/${user}`;
     const mailDirStats = lstatSync(`${mailDir}/`, { throwIfNoEntry: false });
 
-    if (mailDirStats.isDirectory()) {
+    if (mailDirStats?.isDirectory()) {
       const mailFile = `${mailDir}/${objectKey}`;
       console.log(`Delivering to ${mailFile}`);
       writeFileSync(mailFile, emailContents);
@@ -120,7 +130,8 @@ async function deliverMail(destination, objectKey, emailContents) {
         return null;
       }
     } else {
-      console.log(`Unable to deliver to ${destination}.  Skipping.`);
+      console.log(`Unable to deliver to ${destination}.  ${mailDir} may not be a directory or inaccessible.  Skipping.`);
+      console.log('ls: ' + readdirSync(mailDir, { 'recursive': true }));
       return null;
     }
   } else {
@@ -156,8 +167,9 @@ async function resolveAliases(aliasArray) {
 }
 
 async function getDeliveryDestination(emailAddress) {
-  console.log('s3handler.js:getDeliveryDestination -- ' + JSON.stringify(emailAddress));
-  const apiResponse = await getAlias([], { 'alias': emailAddress });
+  const lowercaseEmail = emailAddress.toLowerCase();
+  console.log('s3handler.js:getDeliveryDestination -- ' + JSON.stringify(lowercaseEmail));
+  const apiResponse = await getAlias([], { 'alias': lowercaseEmail });
 
   // Response Code 405 = Alias does not Exist
   if (apiResponse?.code == 405) return [];

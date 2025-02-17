@@ -1,4 +1,4 @@
-import { execute as getAlias } from './newEndpoints/alias/GET';
+import { execute as getAlias } from './newEndpoints/alias/GET.js';
 import { removeSubAddressExtension } from './newEndpoints/emailUtilities.js';
 
 /* Lambda must return a callback with one of these dispositions:
@@ -15,11 +15,11 @@ export const handler = (lambdaEvent, lambdaContext, callback) => {
   if (Object.prototype.hasOwnProperty.call(lambdaEvent, 'Records') && (lambdaEvent.Records.length === 1)) {
     const sesRecord = lambdaEvent.Records[0];
     const mailRecord = sesRecord.ses.mail;
+    const mailDestinations = [ ...mailRecord.destination, ...sesRecord.ses.receipt.recipients ];
 
-    console.log('Destination: ' + mailRecord.destination);
-
-    for (const destinationRecord of mailRecord.destination) {
-      const email = removeSubAddressExtension(destinationRecord);
+    console.log('mailDestinations: ' + mailDestinations);
+    for (const destinationRecord of mailDestinations) {
+      const email = removeSubAddressExtension(destinationRecord).toLowerCase();
       console.log('destination: ' + destinationRecord + ' -- email: ' + email);
 
       // X-Postfix-Check-2 means that the first rule has processed and completed with STOP_RULE (i.e. The alias exists)
