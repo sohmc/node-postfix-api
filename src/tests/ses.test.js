@@ -139,7 +139,45 @@ test('Second Encounter - This email is active but set to be ignored', done => {
   };
 
   function checkResult(_isNull = null, sesDisposition) {
-    expect(sesDisposition.disposition).toBe('CONTINUE');
+    expect(sesDisposition.disposition).toBe('STOP_RULE');
+    done();
+  }
+
+  handler(lambdaEvent, {}, checkResult);
+});
+
+test('Third Encounter - Destination is empty but has recipients.', done => {
+  const lambdaEvent = {
+    'Records': [
+      {
+        'ses': {
+          'mail': {
+            'destination': [],
+            'headers': [
+              {
+                'name': 'X-SES-Spam-Verdict',
+                'value': 'PASS',
+              },
+              {
+                'name': 'X-SES-Virus-Verdict',
+                'value': 'PASS',
+              },
+              {
+                'name': 'X-Postfix-Check-2',
+                'value': 'true',
+              },
+            ],
+          },
+          'receipt': {
+            'recipients': ['testing.trumpet@capricadev.tk'],
+          },
+        },
+      },
+    ],
+  };
+
+  function checkResult(_isNull = null, sesDisposition) {
+    expect(sesDisposition.disposition).toBe('STOP_RULE');
     done();
   }
 
