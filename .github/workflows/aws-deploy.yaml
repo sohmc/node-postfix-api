@@ -26,7 +26,7 @@ jobs:
     name: Node ${{ matrix.node-version }} build and deploy
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       
       - name: Setup Node.js environment
         uses: actions/setup-node@v4
@@ -100,7 +100,7 @@ jobs:
     name: Deploy to AWS - nodejs ${{ matrix.node-version }} - function ${{ inputs.function-name }} - handler ${{ inputs.lambda-handler }}
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download a single artifact
         uses: actions/download-artifact@v4
