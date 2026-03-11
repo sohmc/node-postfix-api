@@ -34,9 +34,9 @@ jobs:
       - name: Setup Node.js environment
         uses: actions/setup-node@v6
         with:
-          cache-dependency-path: '**/package-lock.json'
+          # cache-dependency-path: '**/package-lock.json'
+          # cache: 'npm'
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
           package-manager-cache: false
 
       - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
