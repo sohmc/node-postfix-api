@@ -21,7 +21,7 @@ jobs:
       artifact-name: ${{ steps.artifact-upload-name.outputs.artifact-name }}
     strategy:
       matrix:
-        node-version: [20]
+        node-version: [24]
 
     name: Node ${{ matrix.node-version }} build and deploy
     steps:
@@ -85,7 +85,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20]
+        node-version: [24]
 
     env:
       LAMBDA_FUNCTION_NAME: ${{ inputs.function-name }}
