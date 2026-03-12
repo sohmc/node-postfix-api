@@ -40,8 +40,8 @@ done
 
 # Set LAMBDA_RUNTIME if not set by other environment variables
 if [[ -z "$LAMBDA_RUNTIME" ]]; then
-  echo "Setting LAMBDA_RUNTIME to nodejs20.x"
-  LAMBDA_RUNTIME=nodejs20.x
+  echo "Setting LAMBDA_RUNTIME to nodejs24.x"
+  LAMBDA_RUNTIME=nodejs24.x
 else
   echo "LAMBDA_RUNTIME set to ${LAMBDA_RUNTIME}"
 fi
