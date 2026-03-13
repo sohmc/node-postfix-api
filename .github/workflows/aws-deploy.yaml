@@ -103,7 +103,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Download a single artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v8
         id: download-artifact
         with:
           name: ${{ needs.npm-build-deploy.outputs.artifact-name }}
