@@ -70,7 +70,7 @@ jobs:
           FUNCTION: ${{ inputs.function-name }}-${{ inputs.lambda-handler }}
 
       - name: Upload Zip File for Downstream Use
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.artifact-upload-name.outputs.artifact-name }}
           path: ${{ github.workspace }}/src/function.zip
